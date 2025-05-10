@@ -79,14 +79,14 @@ export class Subscribers extends Component<SubscribersProps> {
                   ) : undefined} */}
                   {vm.showAdd()
                     ? WKApp.endpoints.organizationalTool(
-                      channel,
-                      <div className="wk-subscribers-item">
-                        <img
-                          src={require("./assets/icon_add_more_gray.png")}
-                          alt=""
-                        />
-                      </div>
-                    )
+                        channel,
+                        <div className="wk-subscribers-item">
+                          <img
+                            src={require("./assets/icon_add_more_gray.png")}
+                            alt=""
+                          />
+                        </div>
+                      )
                     : undefined}
                   {vm.showRemove() ? (
                     <div
@@ -109,7 +109,7 @@ export class Subscribers extends Component<SubscribersProps> {
                     className="wk-subscribers-more"
                     onClick={() => {
                       context.push(
-                       <SubscriberList channel={channel} ></SubscriberList>,
+                        <SubscriberList channel={channel}></SubscriberList>,
                         new RouteContextConfig({
                           title: "成员列表",
                         })

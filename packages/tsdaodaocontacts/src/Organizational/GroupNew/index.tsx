@@ -20,7 +20,7 @@ import { SuperGroup } from "@tsdaodao/base/src/Utils/const";
 
 export enum OrganizationalGroupNewAction {
   createGroup, // 创建群聊
-  AddMember // 添加成员
+  AddMember, // 添加成员
 }
 
 interface IPorpsOrganizationalGroupNew {
@@ -76,7 +76,6 @@ export class OrganizationalGroupNew extends Component<
 
   componentDidMount(): void {
     // this.getFriendData();
-
   }
 
   // 获取加入公司
@@ -194,7 +193,8 @@ export class OrganizationalGroupNew extends Component<
       }
 
       OTree.push({
-        label: employeesNum > 0 ? `${item.name}(${employeesNum})` : `${item.name}`,
+        label:
+          employeesNum > 0 ? `${item.name}(${employeesNum})` : `${item.name}`,
         value: item.dept_id,
         key: item.short_no,
         icon: (
@@ -293,53 +293,57 @@ export class OrganizationalGroupNew extends Component<
     const newOpt = this.state.optPersonnelData.filter((item) => {
       return item.uid !== uid;
     });
-    const { friendData } = this.state
+    const { friendData } = this.state;
     friendData.map((item) => {
       if (item.uid == uid) {
-        item.checked = false
+        item.checked = false;
       }
-    })
+    });
     this.setState({
       optPersonnelData: [...newOpt],
-      friendData: [...friendData]
+      friendData: [...friendData],
     });
   }
 
   async getFriendData() {
-
-
     let subscribers = new Array<Subscriber>();
 
     // 群聊
     if (this.props.channel.channelID.trim() != "") {
-      const channel = new Channel(this.props.channel.channelID, this.props.channel.channelType)
+      const channel = new Channel(
+        this.props.channel.channelID,
+        this.props.channel.channelType
+      );
 
       // 个人聊天，对方不可选
       if (this.props.channel.channelType == ChannelTypePerson) {
-        const sub = new Subscriber()
-        sub.uid = this.props.channel.channelID
-        subscribers.push(sub)
+        const sub = new Subscriber();
+        sub.uid = this.props.channel.channelID;
+        subscribers.push(sub);
       } else {
         // 群聊
-        const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel); // 获取频道信息
+        const channelInfo =
+          WKSDK.shared().channelManager.getChannelInfo(channel); // 获取频道信息
         if (channelInfo?.orgData?.group_type == SuperGroup) {
-          subscribers = await WKApp.dataSource.channelDataSource.subscribers(channel, {
-            limit: 5000,
-            page: 1
-          })
+          subscribers = await WKApp.dataSource.channelDataSource.subscribers(
+            channel,
+            {
+              limit: 5000,
+              page: 1,
+            }
+          );
         } else {
           await WKSDK.shared().channelManager.syncSubscribes(channel); // 同步订阅者
           subscribers = WKSDK.shared().channelManager.getSubscribes(channel); // 获取订阅者
         }
       }
-
     }
 
-    let subscriberUids = new Array<string>()
+    let subscriberUids = new Array<string>();
     if (subscribers) {
       subscriberUids = subscribers.map((item) => {
         return item.uid;
-      })
+      });
     }
 
     const setFriendData: any[] = [];
@@ -366,14 +370,14 @@ export class OrganizationalGroupNew extends Component<
       for (const value of values) {
         if (value == item.uid) {
           exist = true;
-          break
+          break;
         }
       }
       if (exist) {
-        item.checked = true
+        item.checked = true;
         getFriendOpt.push(item);
       } else {
-        item.checked = false
+        item.checked = false;
         // 删除已选中的
         for (let i = 0; i < optPersonnelData.length; i++) {
           if (optPersonnelData[i].uid == item.uid) {
@@ -395,7 +399,7 @@ export class OrganizationalGroupNew extends Component<
     );
     this.setState({
       optPersonnelData: [...uniqueArr],
-      friendData: [...friendData]
+      friendData: [...friendData],
     });
   }
 
@@ -438,14 +442,13 @@ export class OrganizationalGroupNew extends Component<
 
     // 创建群
     if (this.props.action == OrganizationalGroupNewAction.createGroup) {
-
       try {
         await WKApp.dataSource.channelDataSource.createChannel([
           ...getOptPersonnelData,
-        ])
+        ]);
       } catch (error: any) {
         Toast.error(error.msg);
-        return
+        return;
       }
     }
     // 添加联系人
@@ -457,14 +460,11 @@ export class OrganizationalGroupNew extends Component<
         );
       } catch (error: any) {
         Toast.error(error.msg);
-        return
+        return;
       }
-
     }
     this.onCancel();
   }
-
-
 
   onChangeSearch(value: string) {
     const { friendSearchData, isFriend } = this.state;

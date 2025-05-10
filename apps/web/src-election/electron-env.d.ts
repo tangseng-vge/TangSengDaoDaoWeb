@@ -1,1 +1,1 @@
-declare module 'tmp';
+declare module "tmp";

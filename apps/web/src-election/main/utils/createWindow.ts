@@ -28,7 +28,7 @@ export function createWindow() {
 
   if (NODE_ENV === "development") mainWin.loadURL("http://localhost:3000");
   if (NODE_ENV !== "development") {
-    process.env.DIST_ELECTRON = join(__dirname, '../');
+    process.env.DIST_ELECTRON = join(__dirname, "../");
     const WEB_URL = join(process.env.DIST_ELECTRON, "../../build/index.html");
     mainWin.loadFile(WEB_URL);
   }

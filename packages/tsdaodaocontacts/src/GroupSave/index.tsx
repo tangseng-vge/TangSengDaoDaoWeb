@@ -81,7 +81,10 @@ export default class GroupSave extends Component {
                         }}
                       >
                         <div className="wk-groupsave-content-avatar">
-                          <img src={WKApp.shared.avatarChannel(g.channel)} alt="" />
+                          <img
+                            src={WKApp.shared.avatarChannel(g.channel)}
+                            alt=""
+                          />
                         </div>
                         <div className="wk-groupsave-content-title">
                           {g.title}

@@ -34,7 +34,7 @@ export enum ThemeMode {
   dark,
 }
 export class WKConfig {
-  appName: string = "唐僧叨叨";
+  appName: string = "Bage";
   appVersion: string = "0.0.0"; // app版本
   themeColor: string = "#E46342"; // 主题颜色
   secondColor: string = "rgba(232, 234, 237)";
@@ -235,7 +235,7 @@ export default class WKApp extends ProviderListener {
   openChannel?: Channel; // 当前打开的会话频道
   content?: JSX.Element;
 
-  baseContext!: WKBaseContext; // 唐僧叨叨基础上下文
+  baseContext!: WKBaseContext; // Bage基础上下文
 
   private _notificationIsClose: boolean = false; // 通知是否关闭
 
@@ -261,15 +261,23 @@ export default class WKApp extends ProviderListener {
     WKApp.loginInfo.load(); // 加载登录信息
 
     // 是否是PC端
-    if ((window as any)?.__POWERED_ELECTRON__ || (window as any).__TAURI_IPC__) {
+    if (
+      (window as any)?.__POWERED_ELECTRON__ ||
+      (window as any).__TAURI_IPC__
+    ) {
       this.isPC = true;
-      console.log("PC端")
+      console.log("PC端");
     }
     this.deviceId = this.getDeviceIdFromStorage();
     this.deviceName = this.getOSAndVersion();
     this.deviceModel = this.getBrandsFromUserAgent();
 
-    console.log("设备信息--->", this.deviceId, this.deviceName, this.deviceModel);
+    console.log(
+      "设备信息--->",
+      this.deviceId,
+      this.deviceName,
+      this.deviceModel
+    );
 
     const themeMode = StorageService.shared.getItem("theme-mode");
     if (themeMode === "1") {
@@ -327,8 +335,6 @@ export default class WKApp extends ProviderListener {
     }
 
     WKApp.remoteConfig.startRequestConfig();
-
-
   }
 
   getDeviceIdFromStorage() {
@@ -341,13 +347,14 @@ export default class WKApp extends ProviderListener {
   }
 
   generateUUID() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (
-      c
-    ) {
-      var r = (Math.random() * 16) | 0,
-        v = c == "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        var r = (Math.random() * 16) | 0,
+          v = c == "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
   }
 
   getOSAndVersion() {
@@ -356,13 +363,17 @@ export default class WKApp extends ProviderListener {
       const version = userAgent.match(/Windows NT (\d+\.\d+)/i)?.[1];
       return `Windows ${version}`;
     } else if (/Mac OS X (\d+_\d+(_\d+)?)/i.test(userAgent)) {
-      const version = userAgent.match(/Mac OS X (\d+_\d+(_\d+)?)/i)?.[1]?.replace(/_/g, ".");
+      const version = userAgent
+        .match(/Mac OS X (\d+_\d+(_\d+)?)/i)?.[1]
+        ?.replace(/_/g, ".");
       return `MacOS ${version}`;
     } else if (/Android (\d+(\.\d+)?)/i.test(userAgent)) {
       const version = userAgent.match(/Android (\d+(\.\d+)?)/i)?.[1];
       return `Android ${version}`;
     } else if (/CPU (iPhone )?OS (\d+_\d+(_\d+)?)/i.test(userAgent)) {
-      const version = userAgent.match(/CPU (iPhone )?OS (\d+_\d+(_\d+)?)/i)?.[2]?.replace(/_/g, ".");
+      const version = userAgent
+        .match(/CPU (iPhone )?OS (\d+_\d+(_\d+)?)/i)?.[2]
+        ?.replace(/_/g, ".");
       return `iOS ${version}`;
     } else if (/Linux/i.test(userAgent)) {
       return "Linux (version not available)";
@@ -396,11 +407,13 @@ export default class WKApp extends ProviderListener {
     WKApp.dataSource.contactsSync(); // 同步通讯录
     ProhibitwordsService.shared.sync(); // 同步敏感词
 
-    WKApp.apiClient.get(`/user/devices/${WKApp.shared.deviceId}`).then((res) => {
-      if (res.id) {
-        WKSDK.shared().config.clientMsgDeviceId = res.id;
-      }
-    })
+    WKApp.apiClient
+      .get(`/user/devices/${WKApp.shared.deviceId}`)
+      .then((res) => {
+        if (res.id) {
+          WKSDK.shared().config.clientMsgDeviceId = res.id;
+        }
+      });
   }
 
   connectIM() {
@@ -417,8 +430,6 @@ export default class WKApp extends ProviderListener {
     this.content = content;
     this.notifyListener();
   }
-
-
 
   // 是否登录
   isLogined() {
@@ -466,7 +477,9 @@ export default class WKApp extends ProviderListener {
 
   // 我的用户头像发送改变
   myUserAvatarChange() {
-    this.changeChannelAvatarTag(new Channel(WKApp.loginInfo.uid || "", ChannelTypePerson));
+    this.changeChannelAvatarTag(
+      new Channel(WKApp.loginInfo.uid || "", ChannelTypePerson)
+    );
   }
 
   changeChannelAvatarTag(channel: Channel) {
@@ -616,11 +629,14 @@ export default class WKApp extends ProviderListener {
 
   public setFriendApplysUnreadCount() {
     if (WKApp.loginInfo.isLogined()) {
-      WKApp.apiClient.get(`/user/reddot/friendApply`).then(res => {
-        WKApp.mittBus.emit('friend-applys-unread-count', res.count)
-        WKApp.loginInfo.setStorageItem(`${WKApp.loginInfo.uid}-friend-applys-unread-count`, res.count);
+      WKApp.apiClient.get(`/user/reddot/friendApply`).then((res) => {
+        WKApp.mittBus.emit("friend-applys-unread-count", res.count);
+        WKApp.loginInfo.setStorageItem(
+          `${WKApp.loginInfo.uid}-friend-applys-unread-count`,
+          res.count
+        );
         WKApp.menus.refresh();
-      })
+      });
     }
   }
 
@@ -635,7 +651,9 @@ export default class WKApp extends ProviderListener {
     //   }
     // }
     if (WKApp.loginInfo.isLogined()) {
-      const num = WKApp.loginInfo.getStorageItem(`${WKApp.loginInfo.uid}-friend-applys-unread-count`)
+      const num = WKApp.loginInfo.getStorageItem(
+        `${WKApp.loginInfo.uid}-friend-applys-unread-count`
+      );
       unreadCount = Number(num);
     }
     return unreadCount;
@@ -661,7 +679,10 @@ export default class WKApp extends ProviderListener {
     //   WKApp.endpointManager.invokes(EndpointCategory.friendApplyDataChange);
     // }
     if (WKApp.loginInfo.isLogined()) {
-      WKApp.loginInfo.setStorageItem(`${WKApp.loginInfo.uid}-friend-applys-unread-count`, '0')
+      WKApp.loginInfo.setStorageItem(
+        `${WKApp.loginInfo.uid}-friend-applys-unread-count`,
+        "0"
+      );
     }
     await WKApp.apiClient.delete(`/user/reddot/friendApply`);
   }

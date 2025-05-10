@@ -71,13 +71,17 @@ export class EndpointCommon {
       EndpointID.showConversation,
       (param: any) => {
         const channel = param.channel as Channel;
-        let opts: ShowConversationOptions = {}
+        let opts: ShowConversationOptions = {};
         if (param.opts) {
-          opts = param.opts
+          opts = param.opts;
         }
 
         let initLocateMessageSeq = 0;
-        if (opts && opts.initLocateMessageSeq && opts.initLocateMessageSeq > 0) {
+        if (
+          opts &&
+          opts.initLocateMessageSeq &&
+          opts.initLocateMessageSeq > 0
+        ) {
           initLocateMessageSeq = opts.initLocateMessageSeq;
         }
 
@@ -95,9 +99,9 @@ export class EndpointCommon {
           }
         }
 
-        let key = channel.getChannelKey()
+        let key = channel.getChannelKey();
         if (initLocateMessageSeq > 0) {
-          key = `${key}-${initLocateMessageSeq}`
+          key = `${key}-${initLocateMessageSeq}`;
         }
 
         WKApp.routeRight.replaceToRoot(

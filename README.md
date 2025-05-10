@@ -1,4 +1,4 @@
-# 唐僧叨叨 PC 端
+# Bage PC 端
 
 <a href="https://zh-hans.react.dev/" target="_blank" rel="noopener" style="display:inline-block;">
 	<img src="https://img.shields.io/badge/React-17.0.2-%236CB52D.svg?logo=React" alt="React" />
@@ -35,7 +35,7 @@
 
 ## 简介
 
-唐僧叨叨 PC 端支持 Web 端、Mac 端、Windows 端、Linux 端，是一款高颜值 IM 即时通讯聊天软件，让企业轻松拥有自己的即时通讯软件。由[悟空 IM](https://githubim.com/)提供动力。
+Bage PC 端支持 Web 端、Mac 端、Windows 端、Linux 端，是一款高颜值 IM 即时通讯聊天软件，让企业轻松拥有自己的即时通讯软件。由[悟空 IM](https://githubim.com/)提供动力。
 
 ## Web 版本运行
 

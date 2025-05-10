@@ -42,7 +42,7 @@ function checkUpdate(win: BrowserWindow) {
 
   // 监听发现可用更新事件
   autoUpdater.on("update-available", (message) => {
-    logger.info('检查到有更新');
+    logger.info("检查到有更新");
     logger.info(message);
     sendUpdateMessage({
       cmd: "update-available",
@@ -71,7 +71,7 @@ function checkUpdate(win: BrowserWindow) {
 
   // 监听下载完成事件
   autoUpdater.on("update-downloaded", (releaseObj) => {
-    logger.info('下载完毕！提示安装更新');
+    logger.info("下载完毕！提示安装更新");
     sendUpdateMessage({
       cmd: "update-downloaded",
       data: releaseObj,

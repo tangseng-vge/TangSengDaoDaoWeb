@@ -117,9 +117,9 @@ export class UserInfoVM extends ProviderListener {
 
   shouldShowShort() {
     if (this.channelInfo?.orgData?.short_no) {
-      return true
+      return true;
     }
-    return false
+    return false;
   }
 
   relation(): number {
@@ -190,12 +190,12 @@ export class UserInfoVM extends ProviderListener {
 
   async reloadChannelInfo() {
     const res = await WKApp.apiClient.get(`users/${this.uid}`, {
-      param: { group_no: this.fromChannel?.channelID || '' },
+      param: { group_no: this.fromChannel?.channelID || "" },
     });
     this.channelInfo = Convert.userToChannelInfo(res);
     if (!this.vercode || this.vercode == "") {
       if (res.vercode && res.vercode !== "") {
-        this.vercode = res.vercode
+        this.vercode = res.vercode;
       }
     }
 

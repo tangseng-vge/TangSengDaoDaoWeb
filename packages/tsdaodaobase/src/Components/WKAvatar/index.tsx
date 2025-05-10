@@ -2,13 +2,13 @@ import { Channel } from "wukongimjssdk";
 import React from "react";
 import { Component, CSSProperties } from "react";
 import WKApp from "../../App";
-import "./index.css"
+import "./index.css";
 
 interface WKAvatarProps {
-    channel?: Channel
-    src?: string
-    style?: CSSProperties
-    random?: string
+  channel?: Channel;
+  src?: string;
+  style?: CSSProperties;
+  random?: string;
 }
 
 const defaultAvatarSVG = `
@@ -18,45 +18,52 @@ const defaultAvatarSVG = `
 `;
 
 export interface WKAvatarState {
-    src: string
-    loadedErr: boolean // 图片是否加载错误
+  src: string;
+  loadedErr: boolean; // 图片是否加载错误
 }
 
 export default class WKAvatar extends Component<WKAvatarProps, WKAvatarState> {
-
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            src: this.getImageSrc(),
-            loadedErr: false,
-        };
-    }
-    getImageSrc() {
-        const { channel, src, random } = this.props
-        let imgSrc = ""
-        if (src && src.trim() !== "") {
-            imgSrc = src
-        } else {
-            if (channel) {
-                imgSrc = WKApp.shared.avatarChannel(channel)
-            }
-        }
-        if (random && random !== "") {
-            imgSrc = `${imgSrc}#${random}`
-        }
-        return imgSrc
-    }
-    handleImgError() {
-        this.setState({ src: defaultAvatarSVG, loadedErr: true });
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      src: this.getImageSrc(),
+      loadedErr: false,
     };
-    handleLoad() {
-        if(!this.state.loadedErr) {
-            this.setState({ src: this.getImageSrc() })
-        }
-        
+  }
+  getImageSrc() {
+    const { channel, src, random } = this.props;
+    let imgSrc = "";
+    if (src && src.trim() !== "") {
+      imgSrc = src;
+    } else {
+      if (channel) {
+        imgSrc = WKApp.shared.avatarChannel(channel);
+      }
     }
-    render() {
-        const { style } = this.props
-        return <img alt="" style={style} className="wk-avatar" src={this.state.src} onLoad={this.handleLoad.bind(this)} onError={this.handleImgError.bind(this)} />
+    if (random && random !== "") {
+      imgSrc = `${imgSrc}#${random}`;
     }
+    return imgSrc;
+  }
+  handleImgError() {
+    this.setState({ src: defaultAvatarSVG, loadedErr: true });
+  }
+  handleLoad() {
+    if (!this.state.loadedErr) {
+      this.setState({ src: this.getImageSrc() });
+    }
+  }
+  render() {
+    const { style } = this.props;
+    return (
+      <img
+        alt=""
+        style={style}
+        className="wk-avatar"
+        src={this.state.src}
+        onLoad={this.handleLoad.bind(this)}
+        onError={this.handleImgError.bind(this)}
+      />
+    );
+  }
 }

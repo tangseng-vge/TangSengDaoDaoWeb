@@ -72,7 +72,10 @@ export class NewFriendVM extends ProviderListener {
 
   async clearFriendApply(): Promise<void> {
     if (WKApp.loginInfo.isLogined()) {
-      WKApp.loginInfo.setStorageItem(`${WKApp.loginInfo.uid}-friend-applys-unread-count`, '0')
+      WKApp.loginInfo.setStorageItem(
+        `${WKApp.loginInfo.uid}-friend-applys-unread-count`,
+        "0"
+      );
     }
     await WKApp.apiClient.delete(`/user/reddot/friendApply`);
   }

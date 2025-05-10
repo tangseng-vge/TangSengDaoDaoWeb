@@ -1,3 +1,1 @@
-
-
-export const SuperGroup = 1 // 超级群
+export const SuperGroup = 1; // 超级群

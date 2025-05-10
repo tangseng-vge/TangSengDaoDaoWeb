@@ -12,7 +12,10 @@ import { FriendAdd } from "./FriendAdd";
 import GroupSave from "./GroupSave";
 import { NewFriend } from "./NewFriend";
 import { ContactsListManager } from "./Service/ContactsListManager";
-import { OrganizationalGroupNew, OrganizationalGroupNewAction } from "./Organizational/GroupNew/index";
+import {
+  OrganizationalGroupNew,
+  OrganizationalGroupNewAction,
+} from "./Organizational/GroupNew/index";
 
 export default class ContactsModule implements IModule {
   id(): string {
@@ -45,7 +48,7 @@ export default class ContactsModule implements IModule {
     WKApp.endpoints.registerContactsHeader("friends.new", (param: any) => {
       return (
         <IconListItem
-          badge={ WKApp.shared.getFriendApplysUnreadCount() }
+          badge={WKApp.shared.getFriendApplysUnreadCount()}
           title="新朋友"
           icon={require("./assets/friend_new.png")}
           backgroudColor={"var(--wk-color-secondary)"}
@@ -112,7 +115,11 @@ export default class ContactsModule implements IModule {
       (param) => {
         const channel = param.channel as any;
         return (
-          <OrganizationalGroupNew channel={channel} render={param.render} action={OrganizationalGroupNewAction.AddMember} />
+          <OrganizationalGroupNew
+            channel={channel}
+            render={param.render}
+            action={OrganizationalGroupNewAction.AddMember}
+          />
         );
       }
     );

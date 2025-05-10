@@ -53,8 +53,6 @@ export class ChatContentPage extends Component<
     WKSDK.shared().channelManager.removeListener(this.channelInfoListener);
   }
 
-
-
   render(): React.ReactNode {
     const { channel, initLocateMessageSeq } = this.props;
     const { showChannelSetting } = this.state;
@@ -169,7 +167,7 @@ export class ChatContentPage extends Component<
   }
 }
 
-export default class ChatPage extends Component<any> {
+export default class ChatPage extends Component<any,any> {
   vm!: ChatVM;
   constructor(props: any) {
     super(props);
@@ -179,9 +177,7 @@ export default class ChatPage extends Component<any> {
     // WKApp.routeMain.replaceToRoot(<ChatContentPage vm={this.vm}></ChatContentPage>)
   }
 
-  componentWillUnmount() { }
-
-
+  componentWillUnmount() {}
 
   render(): ReactNode {
     return (
@@ -203,7 +199,12 @@ export default class ChatPage extends Component<any> {
                   <div className="wk-chat-search">
                     <div className="wk-chat-title">{vm.connectTitle}</div>
                     <div
-                      style={{ marginRight: '20px', alignItems: 'center', display: 'flex', cursor: 'pointer' }}
+                      style={{
+                        marginRight: "20px",
+                        alignItems: "center",
+                        display: "flex",
+                        cursor: "pointer",
+                      }}
                       onClick={() => {
                         vm.showGlobalSearch = true;
                       }}
@@ -229,7 +230,7 @@ export default class ChatPage extends Component<any> {
                     >
                       <div
                         className="wk-chat-search-add"
-                        style={{ alignItems: 'center', display: 'flex' }}
+                        style={{ alignItems: "center", display: "flex" }}
                         onClick={() => {
                           vm.showAddPopover = !vm.showAddPopover;
                         }}
@@ -264,20 +265,22 @@ export default class ChatPage extends Component<any> {
                 </div>
               </div>
               <Modal
-                visible={vm.showGlobalSearch} 
-                closeOnEsc={true} 
+                visible={vm.showGlobalSearch}
+                closeOnEsc={true}
                 onCancel={() => {
-                  vm.showGlobalSearch = false
+                  vm.showGlobalSearch = false;
                 }}
                 footer={null}
                 width="80%"
-                >
-                <div style={{ marginTop: '30px' }}>
-                <GlobalSearch onClick={(item,type:string)=>{
-                    handleGlobalSearchClick(item,type,()=>{
-                      vm.showGlobalSearch = false
-                    })
-                }}/>
+              >
+                <div style={{ marginTop: "30px" }}>
+                  <GlobalSearch
+                    onClick={(item, type: string) => {
+                      handleGlobalSearchClick(item, type, () => {
+                        vm.showGlobalSearch = false;
+                      });
+                    }}
+                  />
                 </div>
               </Modal>
             </div>

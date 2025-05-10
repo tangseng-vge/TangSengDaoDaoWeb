@@ -114,8 +114,9 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
                 WKApp.config.themeMode = ThemeMode.dark;
               }
             }}
-          >{`${WKApp.config.themeMode === ThemeMode.dark ? "关闭" : "打开"
-            }黑暗模式`}</li>
+          >{`${
+            WKApp.config.themeMode === ThemeMode.dark ? "关闭" : "打开"
+          }黑暗模式`}</li>
           <li
             onClick={() => {
               vm.settingSelected = false;
