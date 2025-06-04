@@ -94,6 +94,23 @@ export type MessageDeleteListener = (
   preMessage?: Message
 ) => void;
 
+export class ShowImages{
+  images: string[]=[];
+
+  setStorageItemForImages(images: Array<Object>) {
+      StorageService.shared.setItem("showImages", JSON.stringify(images));
+  }
+
+  getStorageItemForImages(){
+    var imagesStr = StorageService.shared.getItem("showImages");
+    if(imagesStr){
+      return JSON.parse(imagesStr);
+    }else{
+      return [];
+    }
+  }
+}
+
 export class LoginInfo {
   appID!: string;
   shortNo!: string; // 短号
@@ -217,6 +234,7 @@ export default class WKApp extends ProviderListener {
   static config: WKConfig = new WKConfig(); // app配置
   static remoteConfig: WKRemoteConfig = new WKRemoteConfig(); // 远程配置
   static loginInfo: LoginInfo = new LoginInfo(); // 登录信息
+  static showImages: ShowImages =new ShowImages() // 聊天框中的所有图片
   static endpoints: EndpointCommon = new EndpointCommon(); // 常用端点
   static conversationProvider: IConversationProvider; // 最近会话相关数据源
   static messageManager: MessageManager = new MessageManager(); // 消息管理
@@ -440,6 +458,8 @@ export default class WKApp extends ProviderListener {
     WKApp.loginInfo.logout();
     window.location.reload();
   }
+
+
 
   avatarChannel(channel: Channel) {
     if (!channel) {

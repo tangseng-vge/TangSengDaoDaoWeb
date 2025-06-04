@@ -123,6 +123,8 @@ export default class MessageInput
       // ctrl+Enter不处理
       return;
     }
+    console.log("按回车了")
+    console.log("图片是否显示")
     e.preventDefault();
 
     this.send();

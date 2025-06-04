@@ -365,7 +365,27 @@ export default class BaseModule implements IModule {
     });
 
     WKSDK.shared().chatManager.addMessageListener((message: Message) => {
-      console.log("收到消息->", message);
+      // fixme remoteUrl 异步存储的吗 ???
+      console.log("收到消息->", JSON.stringify(message));
+
+      if (message.contentType === MessageContentType.image) {
+        var storageItemForImages = WKApp.showImages.getStorageItemForImages();
+        var array = new Array<Object>();
+        var remoteUrl = message.content.remoteUrl;
+        console.log("remoteUrl " +remoteUrl)
+        var obj={url: remoteUrl, width: message.content.width, height: message.content.height}
+        console.log(obj)
+        console.log(JSON.stringify(obj))
+        array.push(obj)
+        // 检查 arr2 是否存在且为数组
+        if (storageItemForImages && Array.isArray(storageItemForImages)) {
+          // 创建一个新数组，包含 array 和 arr2 的所有元素
+          array = [...storageItemForImages, ...array];
+          WKApp.showImages.setStorageItemForImages(array);
+        }
+      }
+
+
       if (TypingManager.shared.hasTyping(message.channel)) {
         TypingManager.shared.removeTyping(message.channel);
       }

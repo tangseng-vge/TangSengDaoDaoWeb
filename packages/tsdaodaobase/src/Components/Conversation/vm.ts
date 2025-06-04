@@ -953,14 +953,22 @@ export default class ConversationVM extends ProviderListener {
       this.channel,
       opts
     );
-
+    // fixme 清空图片列表 因为这里是新进入一个聊天窗口 或者切换到另外一个聊天窗口
+    WKApp.showImages.setStorageItemForImages([]);
+    var array = new Array<Object>();
     const newMessages = new Array<Message>();
     if (remoteMessages && remoteMessages.length > 0) {
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
+          // 如果消息是图片
+          // console.log(JSON.stringify(msg));
+          if(msg.content._contentType === MessageContentType.image){
+            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+          }
         }
       });
+      WKApp.showImages.setStorageItemForImages(array);
     }
     const sendingMessages = this.getSendingMessages(this.channel);
     let allMessages = [...this.toMessageWraps(newMessages), ...sendingMessages];
@@ -1069,12 +1077,24 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
+    var array = new Array<Object>();
+    var arr2=WKApp.showImages.getStorageItemForImages();
     if (remoteMessages && remoteMessages.length > 0) {
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
+          if(msg.content._contentType === MessageContentType.image){
+            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+          }
         }
       });
+
+      // 检查 arr2 是否存在且为数组
+      if (arr2 && Array.isArray(arr2)) {
+        // 创建一个新数组，包含 array 和 arr2 的所有元素
+        array = [...array, ...arr2];
+        WKApp.showImages.setStorageItemForImages(array);
+      }
     }
     if (remoteMessages.length <= 0 || remoteMessages[0].messageSeq === 1) {
       this.pulldownFinished = true;
@@ -1115,12 +1135,23 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
+    var array = new Array<Object>();
+    var arr2=WKApp.showImages.getStorageItemForImages();
     if (remoteMessages && remoteMessages.length > 0) {
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
-          newMessages.push(msg);
+          if(msg.content._contentType === MessageContentType.image){
+            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+          }
         }
       });
+
+      // 检查 arr2 是否存在且为数组
+      if (arr2 && Array.isArray(arr2)) {
+        // 创建一个新数组，包含 array 和 arr2 的所有元素
+        array = [...arr2,...array];
+        WKApp.showImages.setStorageItemForImages(array);
+      }
     }
     if (remoteMessages.length < opts.limit) {
       this.pullupHasMore = false;
@@ -1314,6 +1345,7 @@ export default class ConversationVM extends ProviderListener {
     content: MessageContent,
     channel: Channel
   ): Promise<Message> {
+
     const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel);
     let setting = new Setting();
     if (channelInfo?.orgData.receipt === 1) {

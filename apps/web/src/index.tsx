@@ -7,6 +7,9 @@ import { BaseModule, WKApp } from "@tsdaodao/base";
 import { LoginModule } from "@tsdaodao/login";
 import { DataSourceModule } from "@tsdaodao/datasource";
 import { ContactsModule } from "@tsdaodao/contacts";
+import { FileModule } from "@tsdaodao/file";
+import { GroupManagerModule } from "@tsdaodao/groupmanager";
+import { AdvancedModule } from "@tsdaodao/advanced";
 
 const apiURL = "http://apijw.newhxchat.top/v1/";
 
@@ -36,6 +39,9 @@ WKApp.shared.registerModule(new BaseModule()); // 基础模块
 WKApp.shared.registerModule(new DataSourceModule()); // 数据源模块
 WKApp.shared.registerModule(new LoginModule()); // 登录模块
 WKApp.shared.registerModule(new ContactsModule()); // 联系模块
+WKApp.shared.registerModule(new FileModule()); // 文件模块
+WKApp.shared.registerModule(new GroupManagerModule()); // 群组管理
+WKApp.shared.registerModule(new AdvancedModule()); // 高级
 
 WKApp.shared.startup(); // app启动
 

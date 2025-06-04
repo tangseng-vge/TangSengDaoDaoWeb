@@ -1,7 +1,7 @@
 module.exports = {
   productName: "Bage", //项目名
   appId: "com.mvc.bage",
-  copyright: "Copyright © ", //版权
+  copyright: "Copyright ©Bage ", //版权
   directories: {
     output: "dist-ele", // 输出文件夹
   },
