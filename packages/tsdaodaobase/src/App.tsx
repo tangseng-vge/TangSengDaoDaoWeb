@@ -94,12 +94,12 @@ export type MessageDeleteListener = (
   preMessage?: Message
 ) => void;
 
-interface StoredImageData {
+export interface StoredImageData {
   url: string;
   width: number;
   height: number;
   channelId?: string; // 添加会话标识
-  messageSeq?: number; // 添加消息序号
+  messageSeq?: string; // 添加消息序号
 }
 
 export class ShowImages {
@@ -118,7 +118,18 @@ export class ShowImages {
     return images;
   }
 
-  // 添加新图片
+  addImages(images: Array<StoredImageData>,channelId:string) {
+    const imageData = this.getStorageItemForImages();
+    var arr = [...images,...imageData]
+    this.setStorageItemForImages(arr);
+    // 通知图片列表变化
+    WKApp.mittBus.emit("images-list-changed", channelId);
+  }
+
+  /**
+   * 添加图片
+   * @param image 图片
+   */
   addImage(image: StoredImageData) {
     if (!image || !image.url) {
       // console.log("尝试添加无效图片数据:", image);
@@ -145,7 +156,7 @@ export class ShowImages {
       images.push(image);
       this.setStorageItemForImages(images);
       // console.log("添加后图片列表数量:", images.length);
-
+      // console.log("添加后图片列表"+JSON.stringify(images))
       // 通知图片列表变化
       WKApp.mittBus.emit("images-list-changed", image.channelId);
     } else {

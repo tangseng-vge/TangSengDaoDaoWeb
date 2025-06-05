@@ -366,9 +366,6 @@ export default class BaseModule implements IModule {
     });
 
     WKSDK.shared().chatManager.addMessageListener((message: Message) => {
-      // fixme remoteUrl 异步存储的吗 ???
-      // console.log("收到消息->", JSON.stringify(message));
-
       if (message.contentType === MessageContentType.image) {
         // 只有当 remoteUrl 存在且有效时才添加图片
         if (message.content.remoteUrl && message.content.remoteUrl !== "") {
@@ -378,7 +375,7 @@ export default class BaseModule implements IModule {
             width: message.content.width,
             height: message.content.height,
             channelId: message.channel.channelID,
-            messageSeq: message.messageSeq
+            messageSeq: message.clientMsgNo
           };
           WKApp.showImages.addImage(imageData);
         } else {
@@ -426,7 +423,7 @@ export default class BaseModule implements IModule {
         if (message && message.contentType === MessageContentType.image) {
           // 确保这是一条图片消息且已有 remoteUrl
           if (message.content.remoteUrl && message.content.remoteUrl !== "") {
-            console.log("图片上传完成，添加到列表:", message.content.remoteUrl);
+            console.log("图片上传完成，添加到列表: " , message.content.remoteUrl +"  "+message.clientMsgNo);
 
             // 检查图片是否已存在于列表中
             const existingImages = WKApp.showImages.getStorageItemForImages();
@@ -441,7 +438,7 @@ export default class BaseModule implements IModule {
                 width: message.content.width,
                 height: message.content.height,
                 channelId: message.channel.channelID,
-                messageSeq: message.messageSeq
+                messageSeq: message.clientMsgNo
               };
               WKApp.showImages.addImage(imageData);
             } else {

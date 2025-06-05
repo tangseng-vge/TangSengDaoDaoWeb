@@ -71,6 +71,7 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
   componentDidMount() {
     const { message } = this.props;
     const content = message.content as ImageContent;
+    // console.log("图片的clientMsgNo",message.clientMsgNo)
     const imageURL = this.getImageSrc(content);
     if (imageURL) {
       console.log("组件挂载时初始化图片数据");
@@ -102,7 +103,7 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
   // 初始化图片数据
   initializeImageData(imageURL: string) {
     const channelId = this.props.message.channel.channelID;
-    const messageSeq = this.props.message.messageSeq;
+    const messageSeq = this.props.message.clientMsgNo;
 
     // 获取频道所有图片
     const channelImages = WKApp.showImages.getImagesByChannel(channelId);
@@ -121,10 +122,10 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     }
 
     // 按照 messageSeq 排序
-    channelImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
+    // channelImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
 
     // 提取当前图片的文件名
-    const currentFileName = this.getFileNameFromURL(imageURL);
+    // const currentFileName = this.getFileNameFromURL(imageURL);
 
     // 转换为预览格式
     const images = channelImages.map(item => ({
@@ -136,8 +137,8 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     // 查找当前图片索引
     let activeIndex = 0;
     for (let i = 0; i < channelImages.length; i++) {
-      const itemFileName = this.getFileNameFromURL(channelImages[i].url);
-      if (currentFileName === itemFileName) {
+      const messageSeq1 = channelImages[i].messageSeq;
+      if (messageSeq === messageSeq1) {
         activeIndex = i;
         break;
       }

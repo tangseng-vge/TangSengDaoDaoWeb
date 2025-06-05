@@ -16,7 +16,7 @@ import {
   ChannelInfo,
   ConversationListener,
 } from "wukongimjssdk";
-import WKApp from "../../App";
+import WKApp, {StoredImageData} from "../../App";
 import { SyncMessageOptions } from "../../Service/DataSource/DataProvider";
 import { MessageWrap } from "../../Service/Model";
 import { ProviderListener } from "../../Service/Provider";
@@ -972,7 +972,7 @@ export default class ConversationVM extends ProviderListener {
               width: msg.content.width,
               height: msg.content.height,
               channelId: this.channel.channelID,
-              messageSeq: msg.messageSeq
+              messageSeq: msg.clientMsgNo
             });
           }
         }
@@ -1088,22 +1088,26 @@ export default class ConversationVM extends ProviderListener {
 
     if (remoteMessages && remoteMessages.length > 0) {
       // console.log(`下拉加载到 ${remoteMessages.length} 条消息，处理图片`);
+      var arr=new Array<StoredImageData>();
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
           // 如果消息是图片，添加到图片列表
           if(msg.content._contentType === MessageContentType.image){
-            // console.log(`添加下拉的图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
-            WKApp.showImages.addImage({
+            arr.push({
               url: msg.content.url,
               width: msg.content.width,
               height: msg.content.height,
               channelId: this.channel.channelID,
-              messageSeq: msg.messageSeq
-            });
+              messageSeq: msg.clientMsgNo
+            })
           }
         }
       });
+      // 如果有图片消息才添加
+      if (arr.length>0) {
+        WKApp.showImages.addImages(arr,this.channel.channelID);
+      }
     }
     if (remoteMessages.length <= 0 || remoteMessages[0].messageSeq === 1) {
       this.pulldownFinished = true;
@@ -1158,7 +1162,7 @@ export default class ConversationVM extends ProviderListener {
               width: msg.content.width,
               height: msg.content.height,
               channelId: this.channel.channelID,
-              messageSeq: msg.messageSeq
+              messageSeq: msg.clientMsgNo
             });
           }
         }
