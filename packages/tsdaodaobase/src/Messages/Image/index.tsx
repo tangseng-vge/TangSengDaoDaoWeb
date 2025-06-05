@@ -46,6 +46,7 @@ export class ImageContent extends MediaMessageContent {
     return "[图片]";
   }
 }
+
 interface ImageItem {
   src: string;
   alt?: string;
@@ -73,24 +74,22 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     const content = message.content as ImageContent;
     const imageURL = this.getImageSrc(content);
     if (imageURL) {
-      console.log("组件挂载时初始化图片数据");
       this.initializeImageData(imageURL);
       
       // 添加图片列表变化监听
       WKApp.mittBus.on("images-list-changed", this.handleImagesListChanged as any);
     }
   }
-
+  
   componentWillUnmount() {
     // 移除监听器
     WKApp.mittBus.off("images-list-changed", this.handleImagesListChanged as any);
   }
-
+  
   // 处理图片列表变化
   handleImagesListChanged = (channelId: any) => {
     const { message } = this.props;
     if (message.channel.channelID === channelId) {
-      console.log("检测到图片列表变化，重新初始化图片数据");
       const content = message.content as ImageContent;
       const imageURL = this.getImageSrc(content);
       if (imageURL) {
@@ -99,81 +98,60 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     }
   }
 
+  // 初始化图片数据
   initializeImageData(imageURL: string) {
     const channelId = this.props.message.channel.channelID;
     const messageSeq = this.props.message.messageSeq;
-    console.log(`初始化图片数据，当前图片URL: ${imageURL}, 频道ID: ${channelId}, 消息序号: ${messageSeq}`);
     
-    const storageItemForImages = WKApp.showImages.getImagesByChannel(channelId);
-    console.log(`从存储获取到 ${storageItemForImages.length} 张图片`);
+    // 获取频道所有图片
+    const channelImages = WKApp.showImages.getImagesByChannel(channelId);
     
-    const images: ImageItem[] = [];
-    let activeIndex = 0;
-    let foundCurrentImage = false;
-
-    // 提取当前图片的文件名部分用于比较
-    const currentUrlParts = imageURL.split('/');
-    const currentFileName = currentUrlParts[currentUrlParts.length - 1].split('?')[0];
-    console.log(`当前图片文件名: ${currentFileName}`);
-
-    if (Array.isArray(storageItemForImages) && storageItemForImages.length > 0) {
-      console.log("开始处理存储的图片列表");
-      // 按照 messageSeq 排序，确保图片顺序正确
-      storageItemForImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
-      
-      // 先获取当前图片的完整URL，用于比较
-      console.log(`当前图片完整URL: ${imageURL}`);
-      
-      storageItemForImages.forEach((item, index) => {
-        if (item && item.url) {
-          const fullUrl = this.getImageSrc(item);
-          if (fullUrl) {
-            // 提取存储图片的文件名部分
-            const itemUrlParts = item.url.split('/');
-            const itemFileName = itemUrlParts[itemUrlParts.length - 1].split('?')[0];
-            
-            // 添加图片到预览列表
-            images.push({
-              src: fullUrl,
-              alt: "",
-              downloadUrl: fullUrl
-            });
-            
-            // 检查是否是当前图片
-            if (!foundCurrentImage && currentFileName === itemFileName) {
-              activeIndex = index;
-              foundCurrentImage = true;
-              console.log(`找到当前图片在列表中的位置: ${index}, messageSeq: ${item.messageSeq}, 文件名: ${itemFileName}`);
-            }
-          }
-        }
-      });
-      console.log(`处理完成，共添加 ${images.length} 张图片到预览列表，当前图片${foundCurrentImage ? '已找到' : '未找到'}`);
-    }
-
-    // 如果当前图片不在列表中，将其添加到列表（仅在组件初始化时）
-    // 注意：这里我们不再添加当前图片，因为这可能导致重复
-    if (images.length === 0) {
-      const currentImageUrl = this.getImageSrc({ url: imageURL });
-      if (currentImageUrl) {
-        console.log(`没有图片列表，添加当前图片`);
-        images.push({
-          src: currentImageUrl,
+    if (!channelImages || channelImages.length === 0) {
+      // 如果没有图片，只添加当前图片
+      this.setState({
+        images: [{
+          src: imageURL,
           alt: "",
-          downloadUrl: currentImageUrl
-        });
-        activeIndex = 0;
+          downloadUrl: imageURL
+        }],
+        activeIndex: 0
+      });
+      return;
+    }
+    
+    // 按照 messageSeq 排序
+    channelImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
+    
+    // 提取当前图片的文件名
+    const currentFileName = this.getFileNameFromURL(imageURL);
+    
+    // 转换为预览格式
+    const images = channelImages.map(item => ({
+      src: this.getImageSrc(item),
+      alt: "",
+      downloadUrl: this.getImageSrc(item)
+    }));
+    
+    // 查找当前图片索引
+    let activeIndex = 0;
+    for (let i = 0; i < channelImages.length; i++) {
+      const itemFileName = this.getFileNameFromURL(channelImages[i].url);
+      if (currentFileName === itemFileName) {
+        activeIndex = i;
+        break;
       }
     }
-
-    console.log(`设置状态: ${images.length} 张图片, 当前索引: ${activeIndex}`);
     
-    this.setState({
-      images: images,
-      activeIndex: activeIndex
-    });
+    this.setState({ images, activeIndex });
+  }
+  
+  // 从 URL 中提取文件名
+  getFileNameFromURL(url: string): string {
+    const urlParts = url.split('/');
+    return urlParts[urlParts.length - 1].split('?')[0];
   }
 
+  // 获取图片 URL
   getImageSrc(content: ImageContent | any) {
     if (content && content.url && content.url !== "") {
       let downloadURL = WKApp.dataSource.commonDataSource.getImageURL(
@@ -186,6 +164,7 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     return content && content.imgData ? content.imgData : undefined;
   }
 
+  // 计算图片显示尺寸
   imageScale(
     orgWidth: number,
     orgHeight: number,
@@ -216,6 +195,7 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     return actSize;
   }
 
+  // 获取图片元素
   getImageElement() {
     const { message } = this.props;
     const content = message.content as ImageContent;
@@ -234,43 +214,14 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     );
   }
 
-  handlePreview = () => {
-    const { message } = this.props;
-    const content = message.content as ImageContent;
-    const imageURL = this.getImageSrc(content);
-    
-    // 提取当前图片的文件名部分用于比较
-    const currentUrlParts = imageURL.split('/');
-    const currentFileName = currentUrlParts[currentUrlParts.length - 1].split('?')[0];
-    
-    // 查找当前图片在列表中的索引
-    const currentIndex = this.state.images.findIndex(img => {
-      const itemUrlParts = img.src.split('/');
-      const itemFileName = itemUrlParts[itemUrlParts.length - 1].split('?')[0];
-      return currentFileName === itemFileName;
-    });
-
-    console.log(`预览图片，文件名: ${currentFileName}, 找到索引: ${currentIndex}`);
-
-    if (currentIndex !== -1) {
-      this.setState({
-        showPreview: true,
-        activeIndex: currentIndex
-      });
-    } else {
-      console.log("未找到当前图片在预览列表中的位置，使用默认索引");
-      this.setState({
-        showPreview: true
-      });
-    }
-  }
-
+  // 处理预览状态变化
   handlePreviewChange = (activeImage: ImageDecorator, index: number) => {
     this.setState({ activeIndex: index });
   };
 
-  closePreview = () => {
-    this.setState({ showPreview: false });
+  // 处理图片点击
+  handlePreview = () => {
+    this.setState({ showPreview: true });
   }
 
   render() {
