@@ -10,6 +10,7 @@ import {
   CMDContent,
   MessageText,
   Subscriber,
+  SendackPacket,
 } from "wukongimjssdk";
 import React, { ElementType } from "react";
 import { Howl, Howler } from "howler";
@@ -369,22 +370,21 @@ export default class BaseModule implements IModule {
       console.log("收到消息->", JSON.stringify(message));
 
       if (message.contentType === MessageContentType.image) {
-        var storageItemForImages = WKApp.showImages.getStorageItemForImages();
-        var array = new Array<Object>();
-        var remoteUrl = message.content.remoteUrl;
-        console.log("remoteUrl " +remoteUrl)
-        var obj={url: remoteUrl, width: message.content.width, height: message.content.height}
-        console.log(obj)
-        console.log(JSON.stringify(obj))
-        array.push(obj)
-        // 检查 arr2 是否存在且为数组
-        if (storageItemForImages && Array.isArray(storageItemForImages)) {
-          // 创建一个新数组，包含 array 和 arr2 的所有元素
-          array = [...storageItemForImages, ...array];
-          WKApp.showImages.setStorageItemForImages(array);
+        // 只有当 remoteUrl 存在且有效时才添加图片
+        if (message.content.remoteUrl && message.content.remoteUrl !== "") {
+          console.log("添加图片到列表，remoteUrl:", message.content.remoteUrl);
+          const imageData = {
+            url: message.content.remoteUrl,
+            width: message.content.width,
+            height: message.content.height,
+            channelId: message.channel.channelID,
+            messageSeq: message.messageSeq
+          };
+          WKApp.showImages.addImage(imageData);
+        } else {
+          console.log("图片 remoteUrl 为空，暂不添加到列表");
         }
       }
-
 
       if (TypingManager.shared.hasTyping(message.channel)) {
         TypingManager.shared.removeTyping(message.channel);
@@ -414,6 +414,41 @@ export default class BaseModule implements IModule {
           `${from}${message.content.conversationDigest}`
         );
         this.tipsAudio();
+      }
+    });
+
+    // 添加消息状态变更监听器，处理图片上传完成的情况
+    WKSDK.shared().chatManager.addMessageStatusListener((ackPacket: SendackPacket) => {
+      // 当消息状态变更时，检查是否是图片消息且上传成功
+      if (ackPacket.reasonCode === 1) { // 成功状态
+        // 通过 clientSeq 查找消息
+        const message = this.findMessageWithClientSeq(ackPacket.clientSeq);
+        if (message && message.contentType === MessageContentType.image) {
+          // 确保这是一条图片消息且已有 remoteUrl
+          if (message.content.remoteUrl && message.content.remoteUrl !== "") {
+            console.log("图片上传完成，添加到列表:", message.content.remoteUrl);
+            
+            // 检查图片是否已存在于列表中
+            const existingImages = WKApp.showImages.getStorageItemForImages();
+            const exists = existingImages.some(img => 
+              img.url === message.content.remoteUrl && 
+              img.channelId === message.channel.channelID
+            );
+            
+            if (!exists) {
+              const imageData = {
+                url: message.content.remoteUrl,
+                width: message.content.width,
+                height: message.content.height,
+                channelId: message.channel.channelID,
+                messageSeq: message.messageSeq
+              };
+              WKApp.showImages.addImage(imageData);
+            } else {
+              console.log("图片已存在于列表中，不重复添加");
+            }
+          }
+        }
       }
     });
 
@@ -796,7 +831,7 @@ export default class BaseModule implements IModule {
                 title: "解除好友关系",
                 onClick: () => {
                   WKApp.shared.baseContext.showAlert({
-                    content: `将联系人“${channelInfo?.orgData?.displayName}”删除，同时删除与该联系人的聊天记录`,
+                    content: `将联系人"${channelInfo?.orgData?.displayName}"删除，同时删除与该联系人的聊天记录`,
                     onOk: () => {
                       WKApp.dataSource.commonDataSource
                         .deleteFriend(data.uid)
@@ -1541,5 +1576,16 @@ export default class BaseModule implements IModule {
       },
       90000
     );
+  }
+
+  // 查找消息
+  findMessageWithClientSeq(clientSeq: number): Message | undefined {
+    // 这里简化实现，实际应该从 WKSDK 或其他地方获取消息
+    const conversation = WKSDK.shared().conversationManager.openConversation;
+    if (conversation && conversation.lastMessage && 
+        conversation.lastMessage.clientSeq === clientSeq) {
+      return conversation.lastMessage;
+    }
+    return undefined;
   }
 }

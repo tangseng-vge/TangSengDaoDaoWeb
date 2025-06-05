@@ -572,7 +572,7 @@ export default class ConversationVM extends ProviderListener {
     }
   }
 
-  // 获取“输入中”这条消息
+  // 获取"输入中"这条消息
   getTypingMessage(): MessageWrap | undefined {
     const typingMessage = TypingManager.shared.getFakeTypingMessage(
       this.channel
@@ -587,7 +587,7 @@ export default class ConversationVM extends ProviderListener {
     return;
   }
 
-  // 是否有“输入中”的消息
+  // 是否有"输入中"的消息
   hasTyingMessage() {
     if (this.messagesOfOrigin.length === 0) {
       return false;
@@ -600,7 +600,7 @@ export default class ConversationVM extends ProviderListener {
     }
     return false;
   }
-  // 移除“输入中”这条消息
+  // 移除"输入中"这条消息
   removeTypingMessage(notify: boolean = true) {
     const newMessages = new Array();
     for (let i = 0; i < this.messagesOfOrigin.length; i++) {
@@ -613,7 +613,7 @@ export default class ConversationVM extends ProviderListener {
     this.refreshMessages(newMessages);
   }
 
-  // 添加“输入中”这条消息
+  // 添加"输入中"这条消息
   addTypingMessage(notify: boolean = true) {
     const typingMessage = this.getTypingMessage();
     if (!this.hasTyingMessage() && typingMessage) {
@@ -953,22 +953,30 @@ export default class ConversationVM extends ProviderListener {
       this.channel,
       opts
     );
-    // fixme 清空图片列表 因为这里是新进入一个聊天窗口 或者切换到另外一个聊天窗口
-    WKApp.showImages.setStorageItemForImages([]);
-    var array = new Array<Object>();
+    
+    // 清空图片列表 因为这里是新进入一个聊天窗口 或者切换到另外一个聊天窗口
+    console.log(`同步消息前清空频道 ${this.channel.channelID} 的图片列表`);
+    WKApp.showImages.clearChannelImages(this.channel.channelID);
+    
     const newMessages = new Array<Message>();
     if (remoteMessages && remoteMessages.length > 0) {
+      console.log(`收到 ${remoteMessages.length} 条远程消息，开始处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
           // 如果消息是图片
-          // console.log(JSON.stringify(msg));
           if(msg.content._contentType === MessageContentType.image){
-            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+            console.log(`添加图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
+            WKApp.showImages.addImage({
+              url: msg.content.url,
+              width: msg.content.width,
+              height: msg.content.height,
+              channelId: this.channel.channelID,
+              messageSeq: msg.messageSeq
+            });
           }
         }
       });
-      WKApp.showImages.setStorageItemForImages(array);
     }
     const sendingMessages = this.getSendingMessages(this.channel);
     let allMessages = [...this.toMessageWraps(newMessages), ...sendingMessages];
@@ -1077,24 +1085,25 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
-    var array = new Array<Object>();
-    var arr2=WKApp.showImages.getStorageItemForImages();
+    
     if (remoteMessages && remoteMessages.length > 0) {
+      console.log(`下拉加载到 ${remoteMessages.length} 条消息，处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
+          // 如果消息是图片，添加到图片列表
           if(msg.content._contentType === MessageContentType.image){
-            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+            console.log(`添加下拉的图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
+            WKApp.showImages.addImage({
+              url: msg.content.url,
+              width: msg.content.width,
+              height: msg.content.height,
+              channelId: this.channel.channelID,
+              messageSeq: msg.messageSeq
+            });
           }
         }
       });
-
-      // 检查 arr2 是否存在且为数组
-      if (arr2 && Array.isArray(arr2)) {
-        // 创建一个新数组，包含 array 和 arr2 的所有元素
-        array = [...array, ...arr2];
-        WKApp.showImages.setStorageItemForImages(array);
-      }
     }
     if (remoteMessages.length <= 0 || remoteMessages[0].messageSeq === 1) {
       this.pulldownFinished = true;
@@ -1135,23 +1144,25 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
-    var array = new Array<Object>();
-    var arr2=WKApp.showImages.getStorageItemForImages();
+    
     if (remoteMessages && remoteMessages.length > 0) {
+      console.log(`上拉加载到 ${remoteMessages.length} 条消息，处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
+          newMessages.push(msg);
+          // 如果消息是图片，添加到图片列表
           if(msg.content._contentType === MessageContentType.image){
-            array.push({url:msg.content.url,width:msg.content.width,height:msg.content.height});
+            console.log(`添加上拉的图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
+            WKApp.showImages.addImage({
+              url: msg.content.url,
+              width: msg.content.width,
+              height: msg.content.height,
+              channelId: this.channel.channelID,
+              messageSeq: msg.messageSeq
+            });
           }
         }
       });
-
-      // 检查 arr2 是否存在且为数组
-      if (arr2 && Array.isArray(arr2)) {
-        // 创建一个新数组，包含 array 和 arr2 的所有元素
-        array = [...arr2,...array];
-        WKApp.showImages.setStorageItemForImages(array);
-      }
     }
     if (remoteMessages.length < opts.limit) {
       this.pullupHasMore = false;

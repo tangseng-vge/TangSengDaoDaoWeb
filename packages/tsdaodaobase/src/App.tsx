@@ -94,20 +94,94 @@ export type MessageDeleteListener = (
   preMessage?: Message
 ) => void;
 
-export class ShowImages{
-  images: string[]=[];
+interface StoredImageData {
+  url: string;
+  width: number;
+  height: number;
+  channelId?: string; // 添加会话标识
+  messageSeq?: number; // 添加消息序号
+}
 
-  setStorageItemForImages(images: Array<Object>) {
-      StorageService.shared.setItem("showImages", JSON.stringify(images));
+export class ShowImages {
+  private readonly STORAGE_KEY = "showImages";
+  
+  // 设置图片列表
+  setStorageItemForImages(images: StoredImageData[]) {
+    StorageService.shared.setItem(this.STORAGE_KEY, JSON.stringify(images));
   }
-
-  getStorageItemForImages(){
-    var imagesStr = StorageService.shared.getItem("showImages");
-    if(imagesStr){
-      return JSON.parse(imagesStr);
-    }else{
+  
+  // 获取图片列表
+  getStorageItemForImages(): StoredImageData[] {
+    const imagesStr = StorageService.shared.getItem(this.STORAGE_KEY);
+    const images = imagesStr ? JSON.parse(imagesStr) : [];
+    console.log(`从存储中获取所有图片，共 ${images.length} 张`);
+    return images;
+  }
+  
+  // 添加新图片
+  addImage(image: StoredImageData) {
+    if (!image || !image.url) {
+      console.log("尝试添加无效图片数据:", image);
+      return;
+    }
+    
+    if (!image.channelId) {
+      console.log("图片数据缺少 channelId，无法添加");
+      return;
+    }
+    
+    const images = this.getStorageItemForImages();
+    console.log(`当前图片列表数量: ${images.length}`);
+    
+    // 检查是否已存在相同图片
+    const exists = images.some(img => 
+      img.url === image.url && 
+      img.channelId === image.channelId &&
+      img.messageSeq === image.messageSeq
+    );
+    
+    if (!exists) {
+      console.log(`添加新图片: ${image.url} 到频道: ${image.channelId}`);
+      images.push(image);
+      this.setStorageItemForImages(images);
+      console.log("添加后图片列表数量:", images.length);
+      
+      // 通知图片列表变化
+      WKApp.mittBus.emit("images-list-changed", image.channelId);
+    } else {
+      console.log("图片已存在，不重复添加");
+    }
+  }
+  
+  // 获取指定频道的图片
+  getImagesByChannel(channelId: string): StoredImageData[] {
+    if (!channelId) {
+      console.log("未提供 channelId，无法获取图片");
       return [];
     }
+    
+    const images = this.getStorageItemForImages();
+    const channelImages = images.filter(img => img.channelId === channelId);
+    console.log(`获取频道 ${channelId} 的图片，总图片数 ${images.length}，该频道图片数 ${channelImages.length}`);
+    return channelImages;
+  }
+  
+  // 清理指定频道的图片
+  clearChannelImages(channelId: string) {
+    if (!channelId) {
+      console.log("未提供 channelId，无法清理图片");
+      return;
+    }
+    
+    console.log(`清空频道 ${channelId} 的图片列表`);
+    const images = this.getStorageItemForImages();
+    const beforeCount = images.length;
+    const filteredImages = images.filter(img => img.channelId !== channelId);
+    this.setStorageItemForImages(filteredImages);
+    console.log(`清空频道图片完成，清理前 ${beforeCount} 张，清理后 ${filteredImages.length} 张`);
+    
+    // 通知图片列表变化
+    WKApp.mittBus.emit("images-list-changed", channelId);
   }
 }
 
