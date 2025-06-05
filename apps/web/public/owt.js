@@ -4310,13 +4310,6 @@ var ConferenceClient = function ConferenceClient(config, signalingImpl) {
       message: message
     });
   };
-  /**
-   * @function leave
-   * @memberOf Owt.Conference.ConferenceClient
-   * @instance
-   * @desc Leave a conference.
-   * @return {Promise<void, Error>} Returned promise will be resolved with undefined once the connection is disconnected.
-   */
 
 
   this.leave = function () {

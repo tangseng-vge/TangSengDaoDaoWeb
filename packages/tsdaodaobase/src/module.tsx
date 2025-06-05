@@ -367,12 +367,12 @@ export default class BaseModule implements IModule {
 
     WKSDK.shared().chatManager.addMessageListener((message: Message) => {
       // fixme remoteUrl 异步存储的吗 ???
-      console.log("收到消息->", JSON.stringify(message));
+      // console.log("收到消息->", JSON.stringify(message));
 
       if (message.contentType === MessageContentType.image) {
         // 只有当 remoteUrl 存在且有效时才添加图片
         if (message.content.remoteUrl && message.content.remoteUrl !== "") {
-          console.log("添加图片到列表，remoteUrl:", message.content.remoteUrl);
+          // console.log("添加图片到列表，remoteUrl:", message.content.remoteUrl);
           const imageData = {
             url: message.content.remoteUrl,
             width: message.content.width,
@@ -382,7 +382,7 @@ export default class BaseModule implements IModule {
           };
           WKApp.showImages.addImage(imageData);
         } else {
-          console.log("图片 remoteUrl 为空，暂不添加到列表");
+          // console.log("图片 remoteUrl 为空，暂不添加到列表");
         }
       }
 
@@ -427,14 +427,14 @@ export default class BaseModule implements IModule {
           // 确保这是一条图片消息且已有 remoteUrl
           if (message.content.remoteUrl && message.content.remoteUrl !== "") {
             console.log("图片上传完成，添加到列表:", message.content.remoteUrl);
-            
+
             // 检查图片是否已存在于列表中
             const existingImages = WKApp.showImages.getStorageItemForImages();
-            const exists = existingImages.some(img => 
-              img.url === message.content.remoteUrl && 
+            const exists = existingImages.some(img =>
+              img.url === message.content.remoteUrl &&
               img.channelId === message.channel.channelID
             );
-            
+
             if (!exists) {
               const imageData = {
                 url: message.content.remoteUrl,
@@ -1582,7 +1582,7 @@ export default class BaseModule implements IModule {
   findMessageWithClientSeq(clientSeq: number): Message | undefined {
     // 这里简化实现，实际应该从 WKSDK 或其他地方获取消息
     const conversation = WKSDK.shared().conversationManager.openConversation;
-    if (conversation && conversation.lastMessage && 
+    if (conversation && conversation.lastMessage &&
         conversation.lastMessage.clientSeq === clientSeq) {
       return conversation.lastMessage;
     }
