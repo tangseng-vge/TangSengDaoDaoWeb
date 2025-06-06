@@ -126,7 +126,6 @@ export class ShowImages {
     if (!image.channelId) {
       return;
     }
-    
     const images = this.getStorageItemForImages();
     
     // 检查是否已存在相同图片

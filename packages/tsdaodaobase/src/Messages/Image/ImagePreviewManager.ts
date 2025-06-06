@@ -5,6 +5,7 @@ export interface PreviewImage {
   src: string;
   alt?: string;
   downloadUrl?: string;
+  messageSeq?: number;
 }
 
 export interface ImagePreviewState {
@@ -128,8 +129,10 @@ export class ImagePreviewManager {
       
       // 监听图片点击事件
       WKApp.mittBus.on("image-preview-click", ((event) => {
-        const data = event as {channelId: string, imageUrl: string};
-        ImagePreviewManager.instance.updateActiveIndex(data.channelId, data.imageUrl);
+        const data = event as {channelId: string, messageSeq: number};
+        if(data.messageSeq) {
+            ImagePreviewManager.instance.updateActiveIndexByMessageSeq(data.channelId, data.messageSeq);
+        }
       }) as Handler<unknown>);
     }
     return ImagePreviewManager.instance;
@@ -200,62 +203,16 @@ export class ImagePreviewManager {
     }
   }
 
-  private updateActiveIndex(channelId: string, imageUrl: string) {
-    // 如果该频道正在处理中，则跳过
-    if (this.processingChannels.has(channelId)) {
-      return;
-    }
-    
-    this.processingChannels.add(channelId);
-    try {
-      // 获取频道图片
-      const channelImages = WKApp.showImages.getImagesByChannel(channelId);
-      if (!channelImages || channelImages.length === 0) {
-        return;
-      }
-
-      // 从URL中提取文件名进行比较
-      const clickedFileName = this.getFileNameFromURL(imageUrl);
-      
-      // 检查缓存
-      let urlCache = this.urlToIndexCache.get(channelId);
-      if (!urlCache) {
-        urlCache = new Map<string, number>();
-        this.urlToIndexCache.set(channelId, urlCache);
-        
-        // 预填充缓存
-        channelImages.forEach((img, index) => {
-          const fileName = this.getFileNameFromURL(img.url);
-          urlCache!.set(fileName, index);
-        });
-      }
-      
-      // 从缓存中查找索引
-      const cachedIndex = urlCache.get(clickedFileName);
-      if (cachedIndex !== undefined) {
-        this.updateChannelManagerActiveIndex(channelId, cachedIndex);
-        return;
-      }
-      
-      // 缓存未命中，执行一次性查找
-      for (let i = 0; i < channelImages.length; i++) {
-        const imgFileName = this.getFileNameFromURL(channelImages[i].url);
-        urlCache.set(imgFileName, i);
-        
-        if (imgFileName === clickedFileName) {
-          this.updateChannelManagerActiveIndex(channelId, i);
-          return;
-        }
-      }
-      
-    } finally {
-      this.processingChannels.delete(channelId);
-    }
-  }
-  
-  private updateChannelManagerActiveIndex(channelId: string, index: number) {
+  private updateActiveIndexByMessageSeq(channelId: string, messageSeq: number) {
     const manager = this.getOrCreateChannelManager(channelId);
-    const currentState = manager.getState();
+    const currentState = manager.getRawState();
+    
+    const index = currentState.images.findIndex(img => img.messageSeq === messageSeq);
+
+    if (index === -1) {
+        console.error(`ImagePreviewManager: Could not find image with messageSeq ${messageSeq} in channel ${channelId}. Current images:`, currentState.images);
+        return;
+    }
     
     // 避免重复更新相同索引
     if (currentState.activeIndex === index) {
@@ -316,6 +273,7 @@ export class ImagePreviewManager {
         src: downloadURL,
         alt: '',
         downloadUrl: downloadURL,
+        messageSeq: img.messageSeq,
       };
     });
     
@@ -346,18 +304,6 @@ export class ImagePreviewManager {
     }
   }
 
-  getPreviewState(channelId: string, currentImageURL?: string): ImagePreviewState {
-    const manager = this.getOrCreateChannelManager(channelId);
-    const state = manager.getRawState();
-    
-    // 如果提供了当前图片URL，更新激活索引
-    if (currentImageURL) {
-      this.updateActiveIndex(channelId, currentImageURL);
-    }
-    
-    return state;
-  }
-  
   private getOrCreateChannelManager(channelId: string): ChannelImageManager {
     let manager = this.channelManagers.get(channelId);
     

@@ -9,9 +9,9 @@ import { useImagePreview } from "./ImagePreviewContext";
 
 // 声明 mitt 事件类型
 declare module "mitt" {
-  interface EventsMap {
+  interface Events {
     "images-list-changed": string;
-    "image-preview-click": { channelId: string; imageUrl: string };
+    "image-preview-click": { channelId: string; messageSeq: number };
   }
 }
 
@@ -123,13 +123,12 @@ export const ImageCell: React.FC<MessageBaseCellProps> = (props) => {
   };
 
   const handlePreview = () => {
-    const imageURL = getImageSrc(content);
-    if (!imageURL) {
+    if (!message.messageSeq) {
       return;
     }
     WKApp.mittBus.emit("image-preview-click", {
       channelId: message.channel.channelID,
-      imageUrl: imageURL,
+      messageSeq: message.messageSeq,
     });
     setShowPreview(true);
   };
@@ -156,10 +155,13 @@ export const ImageCell: React.FC<MessageBaseCellProps> = (props) => {
           changeable={true}
           showTotal={false}
           onChange={(activeImage, index) => {
-            WKApp.mittBus.emit("image-preview-click", {
-              channelId: message.channel.channelID,
-              imageUrl: activeImage.src,
-            });
+            const messageSeq = (activeImage as any).messageSeq;
+            if (messageSeq) {
+              WKApp.mittBus.emit("image-preview-click", {
+                channelId: message.channel.channelID,
+                messageSeq: messageSeq,
+              });
+            }
           }}
           onMaskClick={() => setShowPreview(false)}
           onClose={() => setShowPreview(false)}

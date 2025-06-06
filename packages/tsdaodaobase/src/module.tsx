@@ -434,14 +434,14 @@ export default class BaseModule implements IModule {
               img.url === message.content.remoteUrl && 
               img.channelId === message.channel.channelID
             );
-            
+            console.log("message.messageSeq", ackPacket.messageSeq);
             if (!exists) {
               const imageData = {
                 url: message.content.remoteUrl,
                 width: message.content.width,
                 height: message.content.height,
                 channelId: message.channel.channelID,
-                messageSeq: message.messageSeq
+                messageSeq: ackPacket.messageSeq
               };
               WKApp.showImages.addImage(imageData);
             } else {
