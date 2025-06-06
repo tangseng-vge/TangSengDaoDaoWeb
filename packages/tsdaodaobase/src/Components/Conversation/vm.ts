@@ -16,7 +16,7 @@ import {
   ChannelInfo,
   ConversationListener,
 } from "wukongimjssdk";
-import WKApp from "../../App";
+import WKApp, { StoredImageData } from "../../App";
 import { SyncMessageOptions } from "../../Service/DataSource/DataProvider";
 import { MessageWrap } from "../../Service/Model";
 import { ProviderListener } from "../../Service/Provider";
@@ -954,20 +954,16 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     
-    // 清空图片列表 因为这里是新进入一个聊天窗口 或者切换到另外一个聊天窗口
-    console.log(`同步消息前清空频道 ${this.channel.channelID} 的图片列表`);
-    WKApp.showImages.clearChannelImages(this.channel.channelID);
-    
     const newMessages = new Array<Message>();
+    const imageMessages: StoredImageData[] = [];
     if (remoteMessages && remoteMessages.length > 0) {
       console.log(`收到 ${remoteMessages.length} 条远程消息，开始处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
           // 如果消息是图片
-          if(msg.content._contentType === MessageContentType.image){
-            console.log(`添加图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
-            WKApp.showImages.addImage({
+          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+            imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
               height: msg.content.height,
@@ -978,6 +974,11 @@ export default class ConversationVM extends ProviderListener {
         }
       });
     }
+    
+    // 替换当前频道的图片列表
+    console.log(`同步消息，设置频道 ${this.channel.channelID} 的图片列表`);
+    WKApp.showImages.setChannelImages(this.channel.channelID, imageMessages);
+    
     const sendingMessages = this.getSendingMessages(this.channel);
     let allMessages = [...this.toMessageWraps(newMessages), ...sendingMessages];
     allMessages = this.sortMessages(allMessages);
@@ -1085,6 +1086,7 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
+    const imageMessages: StoredImageData[] = [];
     
     if (remoteMessages && remoteMessages.length > 0) {
       console.log(`下拉加载到 ${remoteMessages.length} 条消息，处理图片`);
@@ -1092,9 +1094,8 @@ export default class ConversationVM extends ProviderListener {
         if (!msg.isDeleted) {
           newMessages.push(msg);
           // 如果消息是图片，添加到图片列表
-          if(msg.content._contentType === MessageContentType.image){
-            console.log(`添加下拉的图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
-            WKApp.showImages.addImage({
+          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+            imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
               height: msg.content.height,
@@ -1104,6 +1105,9 @@ export default class ConversationVM extends ProviderListener {
           }
         }
       });
+    }
+    if (imageMessages.length > 0) {
+      WKApp.showImages.addImages(imageMessages, this.channel.channelID);
     }
     if (remoteMessages.length <= 0 || remoteMessages[0].messageSeq === 1) {
       this.pulldownFinished = true;
@@ -1144,6 +1148,7 @@ export default class ConversationVM extends ProviderListener {
       opts
     );
     const newMessages = new Array<Message>();
+    const imageMessages: StoredImageData[] = [];
     
     if (remoteMessages && remoteMessages.length > 0) {
       console.log(`上拉加载到 ${remoteMessages.length} 条消息，处理图片`);
@@ -1151,9 +1156,8 @@ export default class ConversationVM extends ProviderListener {
         if (!msg.isDeleted) {
           newMessages.push(msg);
           // 如果消息是图片，添加到图片列表
-          if(msg.content._contentType === MessageContentType.image){
-            console.log(`添加上拉的图片消息 messageSeq=${msg.messageSeq} 到图片列表`);
-            WKApp.showImages.addImage({
+          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+            imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
               height: msg.content.height,
@@ -1163,6 +1167,9 @@ export default class ConversationVM extends ProviderListener {
           }
         }
       });
+    }
+    if (imageMessages.length > 0) {
+      WKApp.showImages.addImages(imageMessages, this.channel.channelID);
     }
     if (remoteMessages.length < opts.limit) {
       this.pullupHasMore = false;

@@ -1,16 +1,17 @@
 import { MediaMessageContent } from "wukongimjssdk";
-import React from "react";
+import React, { useState } from "react";
 import WKApp from "../../App";
 import { MessageContentTypeConst } from "../../Service/Const";
 import MessageBase from "../Base";
-import { MessageCell } from "../MessageCell";
+import { MessageBaseCellProps } from "../MessageCell";
 import Viewer from "react-viewer";
-import {ImageDecorator} from "react-viewer/lib/ViewerProps";
+import { useImagePreview } from "./ImagePreviewContext";
 
 // 声明 mitt 事件类型
 declare module "mitt" {
   interface EventsMap {
     "images-list-changed": string;
+    "image-preview-click": { channelId: string; imageUrl: string };
   }
 }
 
@@ -53,124 +54,34 @@ interface ImageItem {
   downloadUrl?: string;
 }
 
-interface ImageCellState {
-  showPreview: boolean;
-  images: ImageItem[];
-  activeIndex: number;
-}
+export const ImageCell: React.FC<MessageBaseCellProps> = (props) => {
+  const { message, context } = props;
+  const [showPreview, setShowPreview] = useState(false);
+  const { previewState } = useImagePreview();
+  const { images, activeIndex } = previewState;
 
-export class ImageCell extends MessageCell<any, ImageCellState> {
-  constructor(props: any) {
-    super(props);
-    this.state = {
-      showPreview: false,
-      images: [],
-      activeIndex: 0
-    };
-  }
+  const content = message.content as ImageContent;
 
-  componentDidMount() {
-    const { message } = this.props;
-    const content = message.content as ImageContent;
-    const imageURL = this.getImageSrc(content);
-    if (imageURL) {
-      this.initializeImageData(imageURL);
-      
-      // 添加图片列表变化监听
-      WKApp.mittBus.on("images-list-changed", this.handleImagesListChanged as any);
-    }
-  }
-  
-  componentWillUnmount() {
-    // 移除监听器
-    WKApp.mittBus.off("images-list-changed", this.handleImagesListChanged as any);
-  }
-  
-  // 处理图片列表变化
-  handleImagesListChanged = (channelId: any) => {
-    const { message } = this.props;
-    if (message.channel.channelID === channelId) {
-      const content = message.content as ImageContent;
-      const imageURL = this.getImageSrc(content);
-      if (imageURL) {
-        this.initializeImageData(imageURL);
-      }
-    }
-  }
-
-  // 初始化图片数据
-  initializeImageData(imageURL: string) {
-    const channelId = this.props.message.channel.channelID;
-    const messageSeq = this.props.message.messageSeq;
-    
-    // 获取频道所有图片
-    const channelImages = WKApp.showImages.getImagesByChannel(channelId);
-    
-    if (!channelImages || channelImages.length === 0) {
-      // 如果没有图片，只添加当前图片
-      this.setState({
-        images: [{
-          src: imageURL,
-          alt: "",
-          downloadUrl: imageURL
-        }],
-        activeIndex: 0
-      });
-      return;
-    }
-    
-    // 按照 messageSeq 排序
-    channelImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
-    
-    // 提取当前图片的文件名
-    const currentFileName = this.getFileNameFromURL(imageURL);
-    
-    // 转换为预览格式
-    const images = channelImages.map(item => ({
-      src: this.getImageSrc(item),
-      alt: "",
-      downloadUrl: this.getImageSrc(item)
-    }));
-    
-    // 查找当前图片索引
-    let activeIndex = 0;
-    for (let i = 0; i < channelImages.length; i++) {
-      const itemFileName = this.getFileNameFromURL(channelImages[i].url);
-      if (currentFileName === itemFileName) {
-        activeIndex = i;
-        break;
-      }
-    }
-    
-    this.setState({ images, activeIndex });
-  }
-  
-  // 从 URL 中提取文件名
-  getFileNameFromURL(url: string): string {
-    const urlParts = url.split('/');
-    return urlParts[urlParts.length - 1].split('?')[0];
-  }
-
-  // 获取图片 URL
-  getImageSrc(content: ImageContent | any) {
+  const getImageSrc = (content: ImageContent | any) => {
     if (content && content.url && content.url !== "") {
       let downloadURL = WKApp.dataSource.commonDataSource.getImageURL(
         content.url,
         { width: content.width, height: content.height }
       );
-      downloadURL += downloadURL.includes("?") ? "&filename=image.png" : "?filename=image.png";
+      downloadURL += downloadURL.includes("?")
+        ? "&filename=image.png"
+        : "?filename=image.png";
       return downloadURL;
     }
     return content && content.imgData ? content.imgData : undefined;
-  }
+  };
 
-  // 计算图片显示尺寸
-  imageScale(
+  const imageScale = (
     orgWidth: number,
     orgHeight: number,
     maxWidth = 250,
     maxHeight = 250
-  ) {
+  ) => {
     const actSize = { width: orgWidth, height: orgHeight };
     const scaleByWidth = (width: number) => {
       const rate = width / orgWidth;
@@ -193,18 +104,15 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     }
 
     return actSize;
-  }
+  };
 
-  // 获取图片元素
-  getImageElement() {
-    const { message } = this.props;
-    const content = message.content as ImageContent;
-    const scaleSize = this.imageScale(content.width, content.height);
-    
+  const scaleSize = imageScale(content.width, content.height);
+
+  const getImageElement = () => {
     return (
       <img
         alt=""
-        src={this.getImageSrc(content)}
+        src={getImageSrc(content)}
         style={{
           borderRadius: "5px",
           width: scaleSize.width,
@@ -212,52 +120,52 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
         }}
       />
     );
-  }
-
-  // 处理预览状态变化
-  handlePreviewChange = (activeImage: ImageDecorator, index: number) => {
-    this.setState({ activeIndex: index });
   };
 
-  // 处理图片点击
-  handlePreview = () => {
-    this.setState({ showPreview: true });
-  }
+  const handlePreview = () => {
+    const imageURL = getImageSrc(content);
+    if (!imageURL) {
+      return;
+    }
+    WKApp.mittBus.emit("image-preview-click", {
+      channelId: message.channel.channelID,
+      imageUrl: imageURL,
+    });
+    setShowPreview(true);
+  };
 
-  render() {
-    const { message, context } = this.props;
-    const { showPreview, images, activeIndex } = this.state;
-    const content = message.content as ImageContent;
-    const scaleSize = this.imageScale(content.width, content.height);
-
-    return (
-      <MessageBase context={context} message={message}>
-        <div
-          style={{
-            width: scaleSize.width,
-            height: scaleSize.height,
-            cursor: "pointer",
+  return (
+    <MessageBase context={context} message={message}>
+      <div
+        style={{
+          width: scaleSize.width,
+          height: scaleSize.height,
+          cursor: "pointer",
+        }}
+        onClick={handlePreview}
+      >
+        {getImageElement()}
+      </div>
+      {images.length > 0 && (
+        <Viewer
+          visible={showPreview}
+          activeIndex={activeIndex}
+          noImgDetails={true}
+          downloadable={true}
+          rotatable={false}
+          changeable={true}
+          showTotal={false}
+          onChange={(activeImage, index) => {
+            WKApp.mittBus.emit("image-preview-click", {
+              channelId: message.channel.channelID,
+              imageUrl: activeImage.src,
+            });
           }}
-          onClick={this.handlePreview}
-        >
-          {this.getImageElement()}
-        </div>
-        {images.length > 0 && (
-          <Viewer
-            visible={showPreview}
-            activeIndex={activeIndex}
-            noImgDetails={true}
-            downloadable={true}
-            rotatable={false}
-            changeable={true}
-            showTotal={false}
-            onChange={this.handlePreviewChange}
-            onMaskClick={() => this.setState({ showPreview: false })}
-            onClose={() => this.setState({ showPreview: false })}
-            images={images}
-          />
-        )}
-      </MessageBase>
-    );
-  }
-}
+          onMaskClick={() => setShowPreview(false)}
+          onClose={() => setShowPreview(false)}
+          images={images}
+        />
+      )}
+    </MessageBase>
+  );
+};

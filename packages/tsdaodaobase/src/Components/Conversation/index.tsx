@@ -32,6 +32,7 @@ import WKAvatar from "../WKAvatar";
 import { IconClose, IconEdit, IconReply } from "@douyinfe/semi-icons";
 import { Toast, Spin } from "@douyinfe/semi-ui";
 import { FlameMessageCell } from "../../Messages/Flame";
+import { ImagePreviewProvider } from "../../Messages/Image/ImagePreviewContext";
 
 export interface ConversationProps {
   channel: Channel;
@@ -346,7 +347,7 @@ export class Conversation
           scrollOffsetTop >
           this.vm.lastLocalMessageElement.clientHeight + 20
         ) {
-          // 如果滚动距离超过了第一个元素则显示“滚动到底部”
+          // 如果滚动距离超过了第一个元素则显示"滚动到底部"
           this.vm.showScrollToBottomBtn = true;
         } else {
           this.vm.showScrollToBottomBtn = false;
@@ -589,286 +590,288 @@ export class Conversation
         }}
         render={(vm: ConversationVM) => {
           return (
-            <>
-              <div
-                className={classNames(
-                  "wk-conversation",
-                  vm.fileDragEnter ? "wk-conversation-dragover" : undefined,
-                  vm.currentReplyMessage
-                    ? "wk-conversation-hasreply"
-                    : undefined
-                )}
-                style={{
-                  background: chatBg
-                    ? `url(${chatBg}) rgb(245, 247, 249)`
-                    : undefined,
-                }}
-              >
-                <div
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                  }}
-                  onDragEnter={(event) => {
-                    event.preventDefault();
-                    this.dragStart();
-                  }}
-                  className={classNames("wk-conversation-content")}
-                >
-                  <div
-                    className="wk-conversation-messages"
-                    id={vm.messageContainerId}
-                    onScroll={this.handleScroll.bind(this)}
-                  >
-                    {vm.messages.map((message, i) => {
-                      let last = false;
-                      if (i === vm.messages.length - 1) {
-                        last = true;
-                      }
-                      return this.messageUI(message, last);
-                    })}
-
-                    {/* 位置view */}
-                    <ConversationPositionView
-                      onScrollToBottom={async () => {
-                        return this.vm.onDownArrow();
-                      }}
-                      onReminder={(reminder) => {
-                        return this.vm.syncMessages(reminder.messageSeq, () => {
-                          const newMessageWrap =
-                            this.vm.findMessageWithMessageSeq(
-                              reminder.messageSeq
-                            );
-                          if (newMessageWrap) {
-                            newMessageWrap.locateRemind = true; // 设置为闪烁提醒
-                            this.vm.notifyListener();
-                          }
-                        });
-                      }}
-                      showScrollToBottom={vm.showScrollToBottomBtn || false}
-                      unreadCount={vm.unreadCount}
-                      reminders={vm.currentConversation?.reminders?.filter(
-                        (r) => !r.done
-                      )}
-                    ></ConversationPositionView>
-
-                    {vm.fileDragEnter ? (
-                      <div
-                        className="wk-conversation-content-fileupload-mask"
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                        }}
-                        onDragLeave={(event) => {
-                          event.preventDefault();
-                          this.dragEnd();
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          this.dragEnd();
-                          const file = event.dataTransfer.files[0];
-                          if (this._dragFileCallback) {
-                            this._dragFileCallback(file);
-                          }
-                        }}
-                      >
-                        <div className="wk-conversation-content-fileupload-mask-content">
-                          发送给 &nbsp; {channelInfo?.title}
-                        </div>
-                      </div>
-                    ) : undefined}
-                  </div>
-                </div>
-                <div className="wk-conversation-topview">
-                  {vm.currentReplyMessage ? (
-                    <ReplyView
-                      message={vm.currentReplyMessage}
-                      vm={vm}
-                      onClose={() => {
-                        vm.currentReplyMessage = undefined;
-                      }}
-                    ></ReplyView>
-                  ) : undefined}
-                </div>
+            <ImagePreviewProvider channelId={channel.channelID}>
+              <>
                 <div
                   className={classNames(
-                    "wk-conversation-multiplepanel",
-                    vm.editOn ? "wk-conversation-multiplepanel-show" : undefined
+                    "wk-conversation",
+                    vm.fileDragEnter ? "wk-conversation-dragover" : undefined,
+                    vm.currentReplyMessage
+                      ? "wk-conversation-hasreply"
+                      : undefined
                   )}
+                  style={{
+                    background: chatBg
+                      ? `url(${chatBg}) rgb(245, 247, 249)`
+                      : undefined,
+                  }}
                 >
-                  <MultiplePanel
-                    onClose={() => {
-                      vm.editOn = false;
-                      vm.unCheckAllMessages();
+                  <div
+                    onDragOver={(event) => {
+                      event.preventDefault();
                     }}
-                    onForward={() => {
-                      WKApp.shared.baseContext.showConversationSelect(
-                        (channels: Channel[]) => {
-                          const messages = vm.getCheckedMessages();
-                          if (!messages || messages.length === 0) {
-                            Toast.error("请先选择消息！");
-                            return;
-                          }
-                          for (const message of messages) {
-                            let cloneContent = message.content; // TODO:这里理论上需要clone一份 但是不clone也没发现问题
-                            for (const channel of channels) {
-                              this.sendMessage(cloneContent, channel);
-                            }
-                          }
-                          vm.editOn = false;
-                          vm.unCheckAllMessages();
+                    onDragEnter={(event) => {
+                      event.preventDefault();
+                      this.dragStart();
+                    }}
+                    className={classNames("wk-conversation-content")}
+                  >
+                    <div
+                      className="wk-conversation-messages"
+                      id={vm.messageContainerId}
+                      onScroll={this.handleScroll.bind(this)}
+                    >
+                      {vm.messages.map((message, i) => {
+                        let last = false;
+                        if (i === vm.messages.length - 1) {
+                          last = true;
                         }
-                      );
-                    }}
-                    onMergeForward={() => {
-                      WKApp.shared.baseContext.showConversationSelect(
-                        (channels: Channel[]) => {
-                          vm.sendMergeforward(channels);
-                          vm.editOn = false;
-                          vm.unCheckAllMessages();
-                        }
-                      );
-                    }}
-                    onDelete={async () => {
-                      const checkedMessagewraps = vm.getCheckedMessages();
-                      const checkedMessages = checkedMessagewraps.map((m) => {
-                        return m.message;
-                      });
-                      await vm.deleteMessages(checkedMessages);
+                        return this.messageUI(message, last);
+                      })}
 
-                      vm.editOn = false;
-                      vm.unCheckAllMessages();
-                    }}
-                  ></MultiplePanel>
-                </div>
-                <div className="wk-conversation-footer">
-                  <div className="wk-conversation-footer-content">
-                    <MessageInput
-                      members={this.vm.subscribers.filter(
-                        (s) => s.uid !== WKApp.loginInfo.uid
-                      )}
-                      onContext={(ctx) => {
-                        this._messageInputContext = ctx;
-                      }}
-                      toolbar={this.chatToolbarUI()}
-                      context={this}
-                      onSend={async (text: string, mention?: MentionModel) => {
-                        const content = new MessageText(text);
-                        if (mention) {
-                          const mn = new Mention();
-                          mn.all = mention.all;
-                          mn.uids = mention.uids;
-                          content.mention = mn;
-                        }
-                        if (vm.currentReplyMessage) {
-                          if (vm.currentHandlerType === 2) {
-                            // 编辑消息
-                            let json = content.encodeJSON();
-                            json["type"] = MessageContentType.text;
-                            await vm.editMessage(
-                              vm.currentReplyMessage.messageID,
-                              vm.currentReplyMessage.messageSeq,
-                              vm.currentReplyMessage.channel.channelID,
-                              vm.currentReplyMessage.channel.channelType,
-                              JSON.stringify(json)
-                            );
-                            vm.currentReplyMessage = undefined;
-                            return;
-                          }
-                          const reply = new Reply();
-                          reply.messageID = vm.currentReplyMessage.messageID;
-                          reply.messageSeq = vm.currentReplyMessage.messageSeq;
-                          reply.fromUID = vm.currentReplyMessage.fromUID;
-                          const channelInfo =
-                            WKSDK.shared().channelManager.getChannelInfo(
-                              new Channel(
-                                vm.currentReplyMessage.fromUID,
-                                ChannelTypePerson
-                              )
-                            );
-                          if (channelInfo) {
-                            reply.fromName = channelInfo.title;
-                          }
-                          reply.content = vm.currentReplyMessage.content;
-                          content.reply = reply;
+                      {/* 位置view */}
+                      <ConversationPositionView
+                        onScrollToBottom={async () => {
+                          return this.vm.onDownArrow();
+                        }}
+                        onReminder={(reminder) => {
+                          return this.vm.syncMessages(reminder.messageSeq, () => {
+                            const newMessageWrap =
+                              this.vm.findMessageWithMessageSeq(
+                                reminder.messageSeq
+                              );
+                            if (newMessageWrap) {
+                              newMessageWrap.locateRemind = true; // 设置为闪烁提醒
+                              this.vm.notifyListener();
+                            }
+                          });
+                        }}
+                        showScrollToBottom={vm.showScrollToBottomBtn || false}
+                        unreadCount={vm.unreadCount}
+                        reminders={vm.currentConversation?.reminders?.filter(
+                          (r) => !r.done
+                        )}
+                      ></ConversationPositionView>
+
+                      {vm.fileDragEnter ? (
+                        <div
+                          className="wk-conversation-content-fileupload-mask"
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                          }}
+                          onDragLeave={(event) => {
+                            event.preventDefault();
+                            this.dragEnd();
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            this.dragEnd();
+                            const file = event.dataTransfer.files[0];
+                            if (this._dragFileCallback) {
+                              this._dragFileCallback(file);
+                            }
+                          }}
+                        >
+                          <div className="wk-conversation-content-fileupload-mask-content">
+                            发送给 &nbsp; {channelInfo?.title}
+                          </div>
+                        </div>
+                      ) : undefined}
+                    </div>
+                  </div>
+                  <div className="wk-conversation-topview">
+                    {vm.currentReplyMessage ? (
+                      <ReplyView
+                        message={vm.currentReplyMessage}
+                        vm={vm}
+                        onClose={() => {
                           vm.currentReplyMessage = undefined;
-                        }
-                        this.sendMessage(content);
+                        }}
+                      ></ReplyView>
+                    ) : undefined}
+                  </div>
+                  <div
+                    className={classNames(
+                      "wk-conversation-multiplepanel",
+                      vm.editOn ? "wk-conversation-multiplepanel-show" : undefined
+                    )}
+                  >
+                    <MultiplePanel
+                      onClose={() => {
+                        vm.editOn = false;
+                        vm.unCheckAllMessages();
                       }}
-                    ></MessageInput>
+                      onForward={() => {
+                        WKApp.shared.baseContext.showConversationSelect(
+                          (channels: Channel[]) => {
+                            const messages = vm.getCheckedMessages();
+                            if (!messages || messages.length === 0) {
+                              Toast.error("请先选择消息！");
+                              return;
+                            }
+                            for (const message of messages) {
+                              let cloneContent = message.content; // TODO:这里理论上需要clone一份 但是不clone也没发现问题
+                              for (const channel of channels) {
+                                this.sendMessage(cloneContent, channel);
+                              }
+                            }
+                            vm.editOn = false;
+                            vm.unCheckAllMessages();
+                          }
+                        );
+                      }}
+                      onMergeForward={() => {
+                        WKApp.shared.baseContext.showConversationSelect(
+                          (channels: Channel[]) => {
+                            vm.sendMergeforward(channels);
+                            vm.editOn = false;
+                            vm.unCheckAllMessages();
+                          }
+                        );
+                      }}
+                      onDelete={async () => {
+                        const checkedMessagewraps = vm.getCheckedMessages();
+                        const checkedMessages = checkedMessagewraps.map((m) => {
+                          return m.message;
+                        });
+                        await vm.deleteMessages(checkedMessages);
+
+                        vm.editOn = false;
+                        vm.unCheckAllMessages();
+                      }}
+                    ></MultiplePanel>
+                  </div>
+                  <div className="wk-conversation-footer">
+                    <div className="wk-conversation-footer-content">
+                      <MessageInput
+                        members={this.vm.subscribers.filter(
+                          (s) => s.uid !== WKApp.loginInfo.uid
+                        )}
+                        onContext={(ctx) => {
+                          this._messageInputContext = ctx;
+                        }}
+                        toolbar={this.chatToolbarUI()}
+                        context={this}
+                        onSend={async (text: string, mention?: MentionModel) => {
+                          const content = new MessageText(text);
+                          if (mention) {
+                            const mn = new Mention();
+                            mn.all = mention.all;
+                            mn.uids = mention.uids;
+                            content.mention = mn;
+                          }
+                          if (vm.currentReplyMessage) {
+                            if (vm.currentHandlerType === 2) {
+                              // 编辑消息
+                              let json = content.encodeJSON();
+                              json["type"] = MessageContentType.text;
+                              await vm.editMessage(
+                                vm.currentReplyMessage.messageID,
+                                vm.currentReplyMessage.messageSeq,
+                                vm.currentReplyMessage.channel.channelID,
+                                vm.currentReplyMessage.channel.channelType,
+                                JSON.stringify(json)
+                              );
+                              vm.currentReplyMessage = undefined;
+                              return;
+                            }
+                            const reply = new Reply();
+                            reply.messageID = vm.currentReplyMessage.messageID;
+                            reply.messageSeq = vm.currentReplyMessage.messageSeq;
+                            reply.fromUID = vm.currentReplyMessage.fromUID;
+                            const channelInfo =
+                              WKSDK.shared().channelManager.getChannelInfo(
+                                new Channel(
+                                  vm.currentReplyMessage.fromUID,
+                                  ChannelTypePerson
+                                )
+                              );
+                            if (channelInfo) {
+                              reply.fromName = channelInfo.title;
+                            }
+                            reply.content = vm.currentReplyMessage.content;
+                            content.reply = reply;
+                            vm.currentReplyMessage = undefined;
+                          }
+                          this.sendMessage(content);
+                        }}
+                      ></MessageInput>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <ContextMenus
-                onContext={(ctx) => {
-                  this.contextMenusContext = ctx;
-                }}
-                menus={
-                  vm.selectMessage
-                    ? WKApp.endpoints
-                        .messageContextMenus(vm.selectMessage, this)
-                        .map((menus) => {
-                          return {
-                            title: menus.title,
-                            onClick: () => {
-                              if (menus.onClick) {
-                                menus.onClick();
-                              }
-                            },
-                          };
-                        })
-                    : []
-                }
-              ></ContextMenus>
-              <ContextMenus
-                onContext={(ctx) => {
-                  this.avatarMenusContext = ctx;
-                }}
-                menus={[
-                  {
-                    title: "@TA",
-                    onClick: () => {
-                      if (!this.vm.selectUID) {
-                        return;
-                      }
-                      const channel = new Channel(
-                        this.vm.selectUID,
-                        ChannelTypePerson
-                      );
-                      const channelInfo =
-                        WKSDK.shared().channelManager.getChannelInfo(channel);
-
-                      this.messageInputContext().addMention(
-                        this.vm.selectUID,
-                        channelInfo?.title || ""
-                      );
-                    },
-                  },
-                  {
-                    title: "查看用户信息",
-                    onClick: () => {
-                      if (!this.vm.selectUID) {
-                        return;
-                      }
-                      let fromChannel: Channel | undefined;
-                      let vercode: string | undefined;
-                      if (this.vm.channel.channelType === ChannelTypeGroup) {
-                        fromChannel = this.vm.channel;
-                        const subscriber = this.vm.subscriberWithUID(
-                          this.vm.selectUID
-                        );
-                        if (subscriber?.orgData?.vercode) {
-                          vercode = subscriber?.orgData?.vercode;
+                <ContextMenus
+                  onContext={(ctx) => {
+                    this.contextMenusContext = ctx;
+                  }}
+                  menus={
+                    vm.selectMessage
+                      ? WKApp.endpoints
+                          .messageContextMenus(vm.selectMessage, this)
+                          .map((menus) => {
+                            return {
+                              title: menus.title,
+                              onClick: () => {
+                                if (menus.onClick) {
+                                  menus.onClick();
+                                }
+                              },
+                            };
+                          })
+                      : []
+                  }
+                ></ContextMenus>
+                <ContextMenus
+                  onContext={(ctx) => {
+                    this.avatarMenusContext = ctx;
+                  }}
+                  menus={[
+                    {
+                      title: "@TA",
+                      onClick: () => {
+                        if (!this.vm.selectUID) {
+                          return;
                         }
-                      }
-                      WKApp.shared.baseContext.showUserInfo(
-                        this.vm.selectUID,
-                        fromChannel,
-                        vercode
-                      );
+                        const channel = new Channel(
+                          this.vm.selectUID,
+                          ChannelTypePerson
+                        );
+                        const channelInfo =
+                          WKSDK.shared().channelManager.getChannelInfo(channel);
+
+                        this.messageInputContext().addMention(
+                          this.vm.selectUID,
+                          channelInfo?.title || ""
+                        );
+                      },
                     },
-                  },
-                ]}
-              />
-            </>
+                    {
+                      title: "查看用户信息",
+                      onClick: () => {
+                        if (!this.vm.selectUID) {
+                          return;
+                        }
+                        let fromChannel: Channel | undefined;
+                        let vercode: string | undefined;
+                        if (this.vm.channel.channelType === ChannelTypeGroup) {
+                          fromChannel = this.vm.channel;
+                          const subscriber = this.vm.subscriberWithUID(
+                            this.vm.selectUID
+                          );
+                          if (subscriber?.orgData?.vercode) {
+                            vercode = subscriber?.orgData?.vercode;
+                          }
+                        }
+                        WKApp.shared.baseContext.showUserInfo(
+                          this.vm.selectUID,
+                          fromChannel,
+                          vercode
+                        );
+                      },
+                    },
+                  ]}
+                />
+              </>
+            </ImagePreviewProvider>
           );
         }}
       ></Provider>
