@@ -104,68 +104,82 @@ export interface StoredImageData {
 
 export class ShowImages {
   private readonly STORAGE_KEY = "showImages";
-  
+
   // 设置图片列表
   setStorageItemForImages(images: StoredImageData[]) {
     StorageService.shared.setItem(this.STORAGE_KEY, JSON.stringify(images));
   }
-  
+
   // 获取图片列表
   getStorageItemForImages(): StoredImageData[] {
     const imagesStr = StorageService.shared.getItem(this.STORAGE_KEY);
     const images = imagesStr ? JSON.parse(imagesStr) : [];
     return images;
   }
-  
+
   // 添加新图片
   addImage(image: StoredImageData) {
     if (!image || !image.url) {
       return;
     }
-    
+
     if (!image.channelId) {
       return;
     }
     const images = this.getStorageItemForImages();
-    
+
     // 检查是否已存在相同图片
-    const exists = images.some(img => 
-      img.url === image.url && 
+    const exists = images.some(img =>
+      img.url === image.url &&
       img.channelId === image.channelId &&
       img.messageSeq === image.messageSeq
     );
-    
+
     if (!exists) {
       images.push(image);
       this.setStorageItemForImages(images);
-      
+
       // 通知图片列表变化
       WKApp.mittBus.emit("images-list-changed", image.channelId);
     }
   }
-  
+
   // 获取指定频道的图片
   getImagesByChannel(channelId: string): StoredImageData[] {
     if (!channelId) {
       return [];
     }
-    
+
     const images = this.getStorageItemForImages();
     const channelImages = images.filter(img => img.channelId === channelId);
     channelImages.sort((a, b) => (a.messageSeq || 0) - (b.messageSeq || 0));
     return channelImages;
   }
-  
+
   // 清理指定频道的图片
   clearChannelImages(channelId: string) {
     if (!channelId) {
       return;
     }
-    
+
     const images = this.getStorageItemForImages();
     const filteredImages = images.filter(img => img.channelId !== channelId);
     this.setStorageItemForImages(filteredImages);
-    
+
+    // 通知图片列表变化
+    WKApp.mittBus.emit("images-list-changed", channelId);
+  }
+
+  // 删除指定频道的指定图片
+  deleteChannelImages(channelId: string,messageSeq: number) {
+    if (!channelId) {
+      return;
+    }
+
+    const images = this.getStorageItemForImages();
+    const filteredImages = images.filter(img => img.channelId == channelId && img.messageSeq !=messageSeq);
+    this.setStorageItemForImages(filteredImages);
+
     // 通知图片列表变化
     WKApp.mittBus.emit("images-list-changed", channelId);
   }
@@ -176,13 +190,13 @@ export class ShowImages {
       return;
     }
     const allStoredImages = this.getStorageItemForImages();
-    
+
     const newUniqueImages = imagesToAdd.filter(newImg => {
       if (!newImg || !newImg.url || !newImg.channelId) {
         return false;
       }
-      const exists = allStoredImages.some(img => 
-        img.url === newImg.url && 
+      const exists = allStoredImages.some(img =>
+        img.url === newImg.url &&
         img.channelId === newImg.channelId &&
         img.messageSeq === newImg.messageSeq
       );
@@ -192,7 +206,7 @@ export class ShowImages {
     if (newUniqueImages.length > 0) {
       const updatedImages = [...allStoredImages, ...newUniqueImages];
       this.setStorageItemForImages(updatedImages);
-      
+
       WKApp.mittBus.emit("images-list-changed", channelId);
     }
   }
@@ -208,7 +222,7 @@ export class ShowImages {
     // 添加新图片
     const newAllImages = [...otherChannelImages, ...imagesToSet];
     this.setStorageItemForImages(newAllImages);
-    
+
     // 通知图片列表变化
     WKApp.mittBus.emit("images-list-changed", channelId);
   }

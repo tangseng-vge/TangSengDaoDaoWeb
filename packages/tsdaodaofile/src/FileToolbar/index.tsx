@@ -47,6 +47,7 @@ export default class FileToolbar extends Component<FileToolbarProps, FileToolbar
         document.addEventListener('paste',this.pasteListen )
 
         this.keyDownListen = function (event: KeyboardEvent) {
+            // console.log("按键盘了 这里是否可能冲突 filetoolbar")
             if (self.state.showDialog && self.state.canSend && event.key === 'Enter') {
                 event.preventDefault();
                 event.stopPropagation();

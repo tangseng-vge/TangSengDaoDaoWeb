@@ -36,6 +36,7 @@ export class InputEdit extends Component<InputEditProps> {
           maxCount={maxCount}
           onKeyDown={(e) => {
             if (!allowWrap) {
+                // fixme 键盘左右失效
               if (e.keyCode != 13) return;
               e.preventDefault();
             }

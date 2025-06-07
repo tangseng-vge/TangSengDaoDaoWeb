@@ -356,6 +356,9 @@ export default class ConversationVM extends ProviderListener {
         //消息撤回
         let existMessage = this.findMessageWithMessageID(param.message_id);
         if (existMessage) {
+          if(existMessage.contentType ==MessageContentType.image ){
+            WKApp.showImages.deleteChannelImages(existMessage.channel.channelID,existMessage.messageSeq)
+          }
           existMessage.revoke = true;
           existMessage.revoker = existMessage.fromUID;
           this.notifyListener();
@@ -953,7 +956,7 @@ export default class ConversationVM extends ProviderListener {
       this.channel,
       opts
     );
-    
+
     const newMessages = new Array<Message>();
     const imageMessages: StoredImageData[] = [];
     if (remoteMessages && remoteMessages.length > 0) {
@@ -961,8 +964,8 @@ export default class ConversationVM extends ProviderListener {
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
-          // 如果消息是图片
-          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+          // 如果消息是图片  并且消息没被撤回 (msg.remoteExtra?.revoke)
+          if(msg.content._contentType === MessageContentType.image && msg.content.url && !msg.remoteExtra?.revoke){
             imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
@@ -974,11 +977,11 @@ export default class ConversationVM extends ProviderListener {
         }
       });
     }
-    
+
     // 替换当前频道的图片列表
     console.log(`同步消息，设置频道 ${this.channel.channelID} 的图片列表`);
     WKApp.showImages.setChannelImages(this.channel.channelID, imageMessages);
-    
+
     const sendingMessages = this.getSendingMessages(this.channel);
     let allMessages = [...this.toMessageWraps(newMessages), ...sendingMessages];
     allMessages = this.sortMessages(allMessages);
@@ -1087,14 +1090,14 @@ export default class ConversationVM extends ProviderListener {
     );
     const newMessages = new Array<Message>();
     const imageMessages: StoredImageData[] = [];
-    
+
     if (remoteMessages && remoteMessages.length > 0) {
       console.log(`下拉加载到 ${remoteMessages.length} 条消息，处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
-          // 如果消息是图片，添加到图片列表
-          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+          // 如果消息是图片，并且消息没被撤回添加到图片列表
+          if(msg.content._contentType === MessageContentType.image && msg.content.url && !msg.remoteExtra?.revoke){
             imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
@@ -1149,14 +1152,14 @@ export default class ConversationVM extends ProviderListener {
     );
     const newMessages = new Array<Message>();
     const imageMessages: StoredImageData[] = [];
-    
+
     if (remoteMessages && remoteMessages.length > 0) {
       console.log(`上拉加载到 ${remoteMessages.length} 条消息，处理图片`);
       remoteMessages.forEach((msg) => {
         if (!msg.isDeleted) {
           newMessages.push(msg);
-          // 如果消息是图片，添加到图片列表
-          if(msg.content._contentType === MessageContentType.image && msg.content.url){
+          // 如果消息是图片，并且消息没被撤回添加到图片列表
+          if(msg.content._contentType === MessageContentType.image && msg.content.url && !msg.remoteExtra?.revoke){
             imageMessages.push({
               url: msg.content.url,
               width: msg.content.width,
