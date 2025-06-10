@@ -1,7 +1,7 @@
 const TSDD_FONFIG = {
   appId: "com.tsdaodao.im",
   name: "Bage",
-  updataUrl: "https://api.botgate.cn/",
+  updataUrl: "https://api.newhxchat.top/",
 };
 
 export default TSDD_FONFIG;

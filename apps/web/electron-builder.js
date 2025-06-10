@@ -17,7 +17,7 @@ module.exports = {
   },
   publish: [{
     provider: "generic",
-    url: "https://api.botgate.cn/v1/common/pcupdater/"
+    url: "https://api.newhxchat.top/v1/common/pcupdater/"
   }],
   mac: {
     extendInfo: {
