@@ -79,6 +79,7 @@ class Login extends Component<any, LoginState> {
                           ) {
                             fullPhone = `0086${vm.username}`;
                           } else {
+                            // fixme 后面统一成86 因为手机注册的也是默认 86
                             if (vm.username.startsWith("+")) {
                               fullPhone = `00${vm.username.substring(1)}`;
                             } else if (!vm.username.startsWith("00")) {

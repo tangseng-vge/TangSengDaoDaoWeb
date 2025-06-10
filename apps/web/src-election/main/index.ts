@@ -13,6 +13,8 @@ import fs from "fs";
 import tmp from "tmp";
 import Screenshots from "electron-screenshots";
 import { join } from "path";
+import { randomUUID } from "crypto";
+
 
 import logo, { getNoMessageTrayIcon } from "./logo";
 import TSDD_FONFIG from "./confing";
@@ -288,13 +290,16 @@ const createMainWindow = async () => {
   const NODE_ENV = process.env.NODE_ENV;
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 960,
-    minHeight: 600,
+    width: 960,      // ← 默认 960
+    height: 760,
+    minWidth: 800,   // ← 再小不得低于 800
+    minHeight: 560,
     // frame: true, // * app边框(包括关闭,全屏,最小化按钮的导航栏) @false: 隐藏
     // titleBarStyle: "hidden",
     // transparent: true, // * app 背景透明
+    autoHideMenuBar: true,
+    // titleBarStyle: "hidden", // 隐藏标题栏
+    roundedCorners: true,  // 圆角
     hasShadow: false, // * app 边框阴影
     show: false, // 启动窗口时隐藏,直到渲染进程加载完成「ready-to-show 监听事件」 再显示窗口,防止加载时闪烁
     resizable: true, // 禁止手动修改窗口尺寸
@@ -302,6 +307,7 @@ const createMainWindow = async () => {
       // 加载脚本
       preload: join(__dirname, "..", "preload/index"),
       nodeIntegration: true,
+      
     },
     // frame: !isWin,
   });
@@ -386,20 +392,36 @@ app.on("open-url", (event, url) => {
   onDeepLink(url);
 });
 
-// 单例模式启动
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on("second-instance", (event, argv) => {
-    if (mainWindow) {
-      mainWindow.show();
-      if (mainWindow.isMinimized()) {
-        mainWindow.restore();
-      }
-      mainWindow.focus();
-    }
-  });
+// 1. 解析启动参数
+const argv = process.argv.slice(1);
+const isSingleMode = argv.includes("--single");  // 显式单实例
+
+// 2. 取得/生成 profile
+const profileArg = argv.find(a => a.startsWith("--profile="));
+const profile = profileArg
+  ? profileArg.split("=")[1]
+  : randomUUID().replace(/-/g, "");               // 系统自动生成
+
+// 3. 切换 userData / temp / cache 等目录
+const baseUserData = app.getPath("userData");     // %APPDATA%\Bage
+const userDataDir = join(baseUserData, profile);
+app.setPath("userData", userDataDir);
+["temp", "cache", "logs"].forEach(key => {
+  app.setPath(key as any, join(userDataDir, key));
+});
+
+// 4. 只有 --single 时才加锁
+if (isSingleMode) {
+  const got = app.requestSingleInstanceLock();
+  if (!got) {
+    app.quit();
+  } else {
+    app.on("second-instance", () => {
+      mainWindow?.show();
+      if (mainWindow?.isMinimized()) mainWindow.restore();
+      mainWindow?.focus();
+    });
+  }
 }
 
 app.on("ready", () => {
